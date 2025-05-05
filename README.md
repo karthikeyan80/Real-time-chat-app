@@ -28,3 +28,19 @@ This is a full-stack real-time chat application built with the MERN stack (Mongo
 
 ---
 
+
+## Install dependencies for both client and server
+
+-cd client
+-npm install     # for client
+
+-cd server
+-npm install     # for server
+
+
+---
+## for executing the project
+npm run dev  # for client
+npm run dev  # for server
+
+
