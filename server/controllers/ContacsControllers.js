@@ -6,12 +6,16 @@ export const getAllContacts = async (request, response, next) => {
   try {
     const users = await User.find(
       { _id: { $ne: request.userId } },
-      "firstName lastName _id"
+      "firstName lastName _id email image color"
     );
 
     const contacts = users.map((user) => ({
-      label: `${user.firstName} ${user.lastName}`,
-      value: user._id,
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      image: user.image,
+      color: user.color,
     }));
 
     return response.status(200).json({ contacts });

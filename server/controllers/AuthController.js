@@ -3,10 +3,12 @@ import User from "../model/UserModel.js";
 import { compare } from "bcrypt";
 import { renameSync, unlinkSync } from "fs";
 
-const maxAge = 3 * 24 * 60 * 60 * 1000;
+// Use a consistent JWT key from environment variables
+const JWT_KEY = process.env.JWT_KEY || "default_secret_key";
+const maxAge = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 const createToken = (email, userId) => {
-  return jwt.sign({ email, userId }, process.env.JWT_KEY, {
+  return jwt.sign({ email, userId }, JWT_KEY, {
     expiresIn: maxAge,
   });
 };
@@ -14,18 +16,32 @@ const createToken = (email, userId) => {
 export const signup = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    console.log(`Signup attempt for email: ${email}`);
+
     if (email && password) {
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        console.log(`User already exists with email: ${email}`);
+        return res.status(400).send("User already exists");
+      }
+
+      console.log(`Creating new user with email: ${email}`);
       const user = await User.create({ email, password });
+      console.log(`User created successfully: ${user.id}`);
+
       res.cookie("jwt", createToken(email, user.id), {
         maxAge,
-        secure: true,
-        sameSite: "None",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        path: "/",
       });
 
       return res.status(201).json({
         user: {
-          id: user?.id,
-          email: user?.email,
+          id: user.id,
+          email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           image: user.image,
@@ -36,7 +52,7 @@ export const signup = async (req, res, next) => {
       return res.status(400).send("Email and Password Required");
     }
   } catch (err) {
-    console.log(err);
+    console.error("Signup error:", err);
     return res.status(500).send("Internal Server Error");
   }
 };
@@ -44,24 +60,36 @@ export const signup = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    console.log(`Login attempt for email: ${email}`);
+
     if (email && password) {
       const user = await User.findOne({ email });
       if (!user) {
+        console.log(`User not found for email: ${email}`);
         return res.status(404).send("User not found");
       }
+
+      console.log(`User found: ${user.id}, comparing passwords...`);
       const auth = await compare(password, user.password);
+      console.log(`Password comparison result: ${auth}`);
+
       if (!auth) {
+        console.log(`Invalid password for user: ${user.id}`);
         return res.status(400).send("Invalid Password");
       }
+
+      console.log(`Login successful for user: ${user.id}`);
       res.cookie("jwt", createToken(email, user.id), {
         maxAge,
-        secure: true,
-        sameSite: "None",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        path: "/",
       });
       return res.status(200).json({
         user: {
-          id: user?.id,
-          email: user?.email,
+          id: user.id,
+          email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           image: user.image,
@@ -72,6 +100,7 @@ export const login = async (req, res, next) => {
       return res.status(400).send("Email and Password Required");
     }
   } catch (err) {
+    console.error("Login error:", err);
     return res.status(500).send("Internal Server Error");
   }
 };
@@ -82,8 +111,8 @@ export const getUserInfo = async (request, response, next) => {
       const userData = await User.findById(request.userId);
       if (userData) {
         return response.status(200).json({
-          id: userData?.id,
-          email: userData?.email,
+          id: userData.id,
+          email: userData.email,
           firstName: userData.firstName,
           lastName: userData.lastName,
           image: userData.image,
@@ -104,7 +133,13 @@ export const getUserInfo = async (request, response, next) => {
 
 export const logout = async (request, response, next) => {
   try {
-    response.cookie("jwt", "", { maxAge: 1, secure: true, sameSite: "None" });
+    response.cookie("jwt", "", {
+      maxAge: 1,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+    });
     return response.status(200).send("Logout successful");
   } catch (err) {
     return response.status(500).send("Internal Server Error");

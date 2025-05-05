@@ -8,15 +8,20 @@ import {
 } from "@/lib/constants";
 import { getColor } from "@/lib/utils";
 import { useAppStore } from "@/store";
+import { useTheme } from "@/contexts/ThemeContext";
 import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { IoMdArrowRoundDown } from "react-icons/io";
 import { IoCloseSharp } from "react-icons/io5";
 import { MdFolderZip } from "react-icons/md";
+import { IoVolumeHigh } from "react-icons/io5";
+import { IoPause, IoPlay } from "react-icons/io5";
 
 const MessageContainer = () => {
   const [showImage, setShowImage] = useState(false);
   const [imageURL, setImageURL] = useState(null);
+  const [voices, setVoices] = useState([]); // Store available voices
+  const [selectedVoice, setSelectedVoice] = useState(null); // Track selected voice
   const {
     selectedChatData,
     setSelectedChatMessages,
@@ -26,7 +31,92 @@ const MessageContainer = () => {
     setDownloadProgress,
     setIsDownloading,
   } = useAppStore();
+  const { theme } = useTheme();
   const messageEndRef = useRef(null);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showAudioOptions, setShowAudioOptions] = useState(false);
+  const audioRef = useRef(null);
+  const optionsRef = useRef(null);
+  const messageRefs = useRef({});
+  const containerRef = useRef(null);
+
+  const cleanTextForSpeech = (text) => {
+    return text.replace(/[^\p{L}\p{N}\s.,!?]/gu, ""); // Remove all non-alphanumeric characters except punctuation
+  };
+
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      const loadVoices = () => {
+        const availableVoices = speechSynthesis.getVoices();
+        setVoices(availableVoices);
+        if (availableVoices.length > 0) {
+          setSelectedVoice(availableVoices[0].name); // Default to the first voice
+        }
+      };
+
+      loadVoices();
+      speechSynthesis.onvoiceschanged = loadVoices; // Reload voices when they change
+    }
+  }, []);
+
+  // Stop audio when clicking outside of a message
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside any message but inside the chat container
+      const isOutsideAnyMessage = Object.values(messageRefs.current).every(
+        (ref) => !ref?.contains(event.target)
+      );
+
+      const isInsideChatContainer = containerRef.current?.contains(
+        event.target
+      );
+
+      if (isOutsideAnyMessage && isInsideChatContainer && currentlyPlaying) {
+        // Stop audio playback
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setCurrentlyPlaying(null);
+        setIsPaused(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [currentlyPlaying]);
+
+  const playTTS = (text, voiceName) => {
+    if ("speechSynthesis" in window) {
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+        return;
+      }
+
+      const cleanedText = cleanTextForSpeech(text);
+      if (!cleanedText.trim()) {
+        console.warn("TTS ignored: Message contains no valid text.");
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+      utterance.lang = "en-US";
+      utterance.rate = 1;
+
+      // Set the voice if provided
+      const voice = voices.find((v) => v.name === voiceName);
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      speechSynthesis.speak(utterance);
+    } else {
+      console.warn("Text-to-Speech is not supported in this browser.");
+    }
+  };
 
   useEffect(() => {
     const getMessages = async () => {
@@ -63,6 +153,13 @@ const MessageContainer = () => {
     }
   }, [selectedChatMessages]);
 
+  // Ensure images trigger scroll after loading
+  const handleImageLoad = () => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const checkIfImage = (filePath) => {
     const imageRegex =
       /\.(jpg|jpeg|png|gif|bmp|tiff|tif|webp|svg|ico|heic|heif)$/i;
@@ -83,194 +180,523 @@ const MessageContainer = () => {
     const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = urlBlob;
-    link.setAttribute("download", url.split("/").pop()); // Optional: Specify a file name for the download
+    link.setAttribute("download", url.split("/").pop());
     document.body.appendChild(link);
     link.click();
     link.remove();
-    window.URL.revokeObjectURL(urlBlob); // Clean up the URL object
+    window.URL.revokeObjectURL(urlBlob);
     setIsDownloading(false);
     setDownloadProgress(0);
   };
 
+  // Add this function to handle scrolling when audio controls appear
+  const scrollToShowAudioControls = (messageId) => {
+    setTimeout(() => {
+      if (messageRefs.current[messageId]) {
+        const messageElement = messageRefs.current[messageId];
+        const containerElement = containerRef.current;
+
+        // Calculate if the message is near the bottom
+        const messageBottom = messageElement.getBoundingClientRect().bottom;
+        const containerBottom = containerElement.getBoundingClientRect().bottom;
+
+        // If the message is close to the bottom, scroll to ensure audio controls are visible
+        if (containerBottom - messageBottom < 100) {
+          containerElement.scrollTop += 100; // Scroll down to make room for controls
+        }
+      }
+    }, 50); // Small delay to ensure DOM has updated
+  };
+
+  // Update the handleAudioPlay function to include scrolling
+  const handleAudioPlay = (messageId, audioUrl) => {
+    if (currentlyPlaying === messageId) {
+      if (isPaused) {
+        // Resume playback
+        if (audioRef.current) {
+          audioRef.current.play();
+          setIsPaused(false);
+        }
+      } else {
+        // Stop playback
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setCurrentlyPlaying(null);
+        setIsPaused(false);
+      }
+    } else {
+      // Start new playback
+      setCurrentlyPlaying(messageId);
+      setIsPaused(false);
+      scrollToShowAudioControls(messageId);
+    }
+  };
+
+  const togglePause = (e, messageId) => {
+    e.stopPropagation();
+    if (currentlyPlaying === messageId) {
+      if (isPaused) {
+        // Resume playback
+        if (audioRef.current) {
+          audioRef.current.play();
+          setIsPaused(false);
+        }
+      } else {
+        // Pause playback
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPaused(true);
+        }
+      }
+    }
+  };
+
+  const downloadAudio = (e, audioUrl) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Create a fetch request to get the audio file
+    fetch(`${HOST}${audioUrl}`)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Create a blob URL
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Create a temporary link element
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = audioUrl.split("/").pop();
+
+        // Append to body, click, and remove
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 100);
+      })
+      .catch((error) => {
+        console.error("Error downloading audio:", error);
+      });
+  };
+
   const renderMessages = () => {
+    // Ensure selectedChatMessages is an array before attempting to map
+    if (!Array.isArray(selectedChatMessages)) {
+      console.warn(
+        "selectedChatMessages is not an array",
+        selectedChatMessages
+      );
+      return null;
+    }
+
+    // If it's an empty array, just return null
+    if (selectedChatMessages.length === 0) {
+      return null;
+    }
+
     let lastDate = null;
     return selectedChatMessages.map((message, index) => {
-      const messageDate = moment(message.timestamp).format("YYYY-MM-DD");
+      // Skip null messages
+      if (!message) return null;
+
+      const messageDate = moment(message.timestamp || new Date()).format(
+        "YYYY-MM-DD"
+      );
       const showDate = messageDate !== lastDate;
       lastDate = messageDate;
 
+      // Safely access the sender
+      const isCurrentUser =
+        message.sender === userInfo.id ||
+        (message.sender &&
+          typeof message.sender === "object" &&
+          message.sender._id === userInfo.id);
+
+      // Determine if the message has long content
+      const isLongContent = message.content && message.content.length > 100;
+
+      // Use consistent identifiers for keys and refs
+      const messageKey = `dm-msg-${index}-${message._id || index}`;
+      const messageRefId = message._id || `msg-${index}`;
+
       return (
-        <div key={index} className="">
+        <div
+          key={messageKey}
+          className=""
+          ref={(el) => (messageRefs.current[messageRefId] = el)}
+        >
           {showDate && (
-            <div className="text-center text-gray-500 my-2">
-              {moment(message.timestamp).format("LL")}
+            <div className="text-center text-gray-300 my-2">
+              {moment(message.timestamp || new Date()).format("LL")}
             </div>
           )}
-          {selectedChatType === "contact" && renderPersonalMessages(message)}
-          {selectedChatType === "channel" && renderChannelMessages(message)}
+          <div className={`${isCurrentUser ? "text-right" : "text-left"}`}>
+            {message.messageType === MESSAGE_TYPES.TEXT && (
+              <div
+                className={`${
+                  isCurrentUser
+                    ? "theme-primary-message"
+                    : "theme-secondary-message"
+                } border inline-block p-4 rounded my-1 ${
+                  isLongContent
+                    ? "w-full sm:w-auto max-w-[95%] sm:max-w-[80%] md:max-w-[60%]"
+                    : "max-w-[85%] sm:max-w-[70%] md:max-w-[50%]"
+                } break-words whitespace-pre-wrap overflow-visible`}
+              >
+                <div>{message.content}</div>
+              </div>
+            )}
+            {message.messageType === MESSAGE_TYPES.AUDIO && (
+              <div
+                className={`${
+                  isCurrentUser
+                    ? "theme-primary-message"
+                    : "theme-secondary-message"
+                } border inline-block p-4 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words relative`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    onClick={() =>
+                      handleAudioPlay(messageRefId, message.audioUrl)
+                    }
+                    className={`hover:opacity-80 transition-colors flex-shrink-0`}
+                  >
+                    <IoVolumeHigh className="text-2xl" />
+                  </button>
+                  <p className={`text-xs`}>
+                    Voice: {message.voiceName || "Default"}
+                  </p>
+                </div>
+                <div
+                  className={`text-sm whitespace-pre-wrap break-words overflow-visible w-full`}
+                >
+                  {message.content}
+                </div>
+                {currentlyPlaying === messageRefId && (
+                  <div className="mt-2">
+                    <audio
+                      ref={audioRef}
+                      src={`${HOST}${message.audioUrl}`}
+                      autoPlay
+                      className="hidden"
+                      onEnded={() => {
+                        setCurrentlyPlaying(null);
+                        setIsPaused(false);
+                      }}
+                    />
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={(e) => togglePause(e, messageRefId)}
+                        className="theme-primary-button rounded-full p-2 transition-all duration-300"
+                      >
+                        {isPaused ? (
+                          <IoPlay className="h-5 w-5" />
+                        ) : (
+                          <IoPause className="h-5 w-5" />
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => downloadAudio(e, message.audioUrl)}
+                        className="ml-2 theme-primary-button rounded-full p-2 transition-all duration-300"
+                      >
+                        <IoMdArrowRoundDown className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {message.messageType === MESSAGE_TYPES.FILE && (
+              <div
+                className={`${
+                  isCurrentUser
+                    ? "theme-primary-message"
+                    : "theme-secondary-message"
+                } border inline-block p-3 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words`}
+              >
+                <div>
+                  {checkIfImage(message.fileUrl) ? (
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setShowImage(true);
+                        setImageURL(message.fileUrl);
+                      }}
+                    >
+                      <img
+                        src={`${HOST}/${message.fileUrl}`}
+                        alt="Sent file"
+                        className="max-h-64 max-w-full object-cover rounded"
+                        onLoad={handleImageLoad}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="text-white/80 text-lg sm:text-xl bg-black/20 rounded-full p-1.5 sm:p-2 flex-shrink-0">
+                          <MdFolderZip />
+                        </span>
+                        <span className="text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]">
+                          {message.fileUrl?.split("/").pop() || "Unknown File"}
+                        </span>
+                      </div>
+                      <button
+                        className="download-option bg-black/20 p-1.5 sm:p-2 text-lg sm:text-xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300 flex-shrink-0 ml-2"
+                        onClick={() => downloadFile(message.fileUrl)}
+                        aria-label="Download file"
+                      >
+                        <IoMdArrowRoundDown />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Remove the bottom profile display for channel messages */}
+            <div
+              className={`text-xs ${
+                isCurrentUser ? "text-right" : "text-left"
+              } ${theme === "dark" ? "text-gray-300" : "text-white/80"}`}
+            >
+              {moment(message.timestamp || new Date()).format("LT")}
+            </div>
+          </div>
         </div>
       );
     });
   };
 
-  const renderPersonalMessages = (message) => {
-    return (
-      <div
-        className={`message  ${
-          message.sender === selectedChatData._id ? "text-left" : "text-right"
-        }`}
-      >
-        {message.messageType === MESSAGE_TYPES.TEXT && (
-          <div
-            className={`${
-              message.sender !== selectedChatData._id
-                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
-                : "bg-[#2a2b33]/50 text-white/80 border-[#ffffff]/20"
-            } border inline-block p-4 rounded my-1 max-w-[50%] break-words`}
-          >
-            {message.content}
-          </div>
-        )}
-        {message.messageType === MESSAGE_TYPES.FILE && (
-          <div
-            className={`${
-              message.sender !== selectedChatData._id
-                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
-                : "bg-[#2a2b33]/50 text-white/80 border-[#ffffff]/20"
-            } border inline-block p-4 rounded my-1 lg:max-w-[50%] break-words`}
-          >
-            {checkIfImage(message.fileUrl) ? (
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  setShowImage(true);
-                  setImageURL(message.fileUrl);
-                }}
-              >
-                <img
-                  src={`${HOST}/${message.fileUrl}`}
-                  alt=""
-                  height={300}
-                  width={300}
-                />
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-5">
-                <span className="text-white/80 text-3xl bg-black/20 rounded-full p-3">
-                  <MdFolderZip />
-                </span>
-                <span>{message.fileUrl.split("/").pop()}</span>
-                <span
-                  className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
-                  onClick={() => downloadFile(message.fileUrl)}
-                >
-                  <IoMdArrowRoundDown />
-                </span>
-              </div>
-            )}
-          </div>
-        )}
+  const renderChannelMessages = () => {
+    // Check if selectedChatMessages is a valid array
+    if (
+      !Array.isArray(selectedChatMessages) ||
+      selectedChatMessages.length === 0
+    ) {
+      return null;
+    }
 
-        <div className="text-xs text-gray-600">
-          {moment(message.timestamp).format("LT")}
-        </div>
-      </div>
-    );
-  };
+    let lastDate = null; // Track the last displayed date
 
-  const renderChannelMessages = (message) => {
-    return (
-      <div
-        className={`mt-5  ${
-          message.sender._id !== userInfo.id ? "text-left" : "text-right"
-        }`}
-      >
-        {message.messageType === MESSAGE_TYPES.TEXT && (
-          <div
-            className={`${
-              message.sender._id === userInfo.id
-                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
-                : "bg-[#2a2b33]/50 text-white/80 border-[#ffffff]/20"
-            } border inline-block p-4 rounded my-1 max-w-[50%] break-words ml-9`}
-          >
-            {message.content}
-          </div>
-        )}
-        {message.messageType === MESSAGE_TYPES.FILE && (
-          <div
-            className={`${
-              message.sender._id === userInfo.id
-                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
-                : "bg-[#2a2b33]/50 text-white/80 border-[#ffffff]/20"
-            } border inline-block p-4 rounded my-1 max-w-[50%] break-words ml-9`}
-          >
-            {checkIfImage(message.fileUrl) ? (
-              <div
-                className="cursor-pointer"
-                onClick={() => {
-                  setShowImage(true);
-                  setImageURL(message.fileUrl);
-                }}
-              >
-                <img
-                  src={`${HOST}/${message.fileUrl}`}
-                  alt=""
-                  height={300}
-                  width={300}
-                />
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-5">
-                <span className="text-white/80 text-3xl bg-black/20 rounded-full p-3">
-                  <MdFolderZip />
-                </span>
-                <span>{message.fileUrl.split("/").pop()}</span>
-                <span
-                  className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
-                  onClick={() => downloadFile(message.fileUrl)}
-                >
-                  <IoMdArrowRoundDown />
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-        {message.sender._id !== userInfo.id ? (
-          <div className="flex items-center justify-start gap-3">
-            <Avatar className="h-8 w-8">
-              {message.sender.image && (
-                <AvatarImage
-                  src={`${HOST}/${message.sender.image}`}
-                  alt="profile"
-                  className="rounded-full"
-                />
+    return selectedChatMessages.map((message, index) => {
+      // Skip null or undefined messages
+      if (!message) return null;
+
+      // Safely access message properties with fallbacks
+      const messageDate = moment(message.timestamp || new Date()).format(
+        "YYYY-MM-DD"
+      );
+      const showDate = messageDate !== lastDate;
+      lastDate = messageDate;
+
+      // Fix: Safely check sender properties
+      const senderID = message.sender
+        ? typeof message.sender === "object"
+          ? message.sender._id
+          : message.sender
+        : null;
+      const isSender = senderID === userInfo.id;
+
+      // Define isCurrentUser based on senderID
+      const isCurrentUser = senderID === userInfo.id;
+
+      // Determine if the message has long content
+      const isLongContent = message.content && message.content.length > 100;
+
+      const messageKey = `channel-msg-${index}-${message._id || index}`;
+      const messageRefId = message._id || `msg-${index}`;
+
+      return (
+        <div
+          key={messageKey}
+          className="mt-5"
+          ref={(el) => (messageRefs.current[messageRefId] = el)}
+        >
+          {showDate && (
+            <div className="text-center text-white my-2">
+              {moment(message.timestamp || new Date()).format("LL")}
+            </div>
+          )}
+          <div className={`${isSender ? "text-right" : "text-left"}`}>
+            {!isSender &&
+              message.sender &&
+              typeof message.sender === "object" && (
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar className="h-8 w-8">
+                    {message.sender.image && (
+                      <AvatarImage
+                        src={`${HOST}/${message.sender.image}`}
+                        alt="profile"
+                        className="rounded-full"
+                      />
+                    )}
+                    <AvatarFallback
+                      className={`uppercase h-8 w-8 flex ${getColor(
+                        message.sender.color || "default"
+                      )} items-center justify-center rounded-full`}
+                    >
+                      {message.sender.firstName?.split("").shift() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-white/60">
+                    {`${message.sender.firstName || ""} ${
+                      message.sender.lastName || ""
+                    }`}
+                  </span>
+                </div>
               )}
-              <AvatarFallback
-                className={`uppercase h-8 w-8 flex ${getColor(
-                  message.sender.color
-                )} items-center justify-center rounded-full`}
-              >
-                {message.sender.firstName.split("").shift()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</span>
 
-            <div className="text-xs text-white/60">
-              {moment(message.timestamp).format("LT")}
+            {message.messageType === MESSAGE_TYPES.TEXT && (
+              <div
+                className={`${
+                  isSender ? "theme-primary-message" : "theme-secondary-message"
+                } border inline-block p-4 rounded my-1 ${
+                  isLongContent
+                    ? "w-full sm:w-auto max-w-[95%] sm:max-w-[80%] md:max-w-[60%]"
+                    : "max-w-[85%] sm:max-w-[70%] md:max-w-[50%]"
+                } break-words whitespace-pre-wrap overflow-visible`}
+              >
+                <div>{message.content}</div>
+              </div>
+            )}
+            {message.messageType === MESSAGE_TYPES.AUDIO && (
+              <div
+                className={`${
+                  isSender ? "theme-primary-message" : "theme-secondary-message"
+                } border inline-block p-4 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words relative`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    onClick={() =>
+                      handleAudioPlay(messageRefId, message.audioUrl)
+                    }
+                    className={`hover:opacity-80 transition-colors flex-shrink-0`}
+                  >
+                    <IoVolumeHigh className="text-2xl" />
+                  </button>
+                  <p className={`text-xs`}>
+                    Voice: {message.voiceName || "Default"}
+                  </p>
+                </div>
+                <div
+                  className={`text-sm whitespace-pre-wrap break-words overflow-visible w-full`}
+                >
+                  {message.content}
+                </div>
+                {currentlyPlaying === messageRefId && (
+                  <div className="mt-2">
+                    <audio
+                      ref={audioRef}
+                      src={`${HOST}${message.audioUrl}`}
+                      autoPlay
+                      className="hidden"
+                      onEnded={() => {
+                        setCurrentlyPlaying(null);
+                        setIsPaused(false);
+                      }}
+                    />
+                    <div className="flex items-center justify-center">
+                      <button
+                        onClick={(e) => togglePause(e, messageRefId)}
+                        className="theme-primary-button rounded-full p-2 transition-all duration-300"
+                      >
+                        {isPaused ? (
+                          <IoPlay className="h-5 w-5" />
+                        ) : (
+                          <IoPause className="h-5 w-5" />
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => downloadAudio(e, message.audioUrl)}
+                        className="ml-2 theme-primary-button rounded-full p-2 transition-all duration-300"
+                      >
+                        <IoMdArrowRoundDown className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {message.messageType === MESSAGE_TYPES.FILE && (
+              <div
+                className={`${
+                  isCurrentUser
+                    ? "theme-primary-message"
+                    : "theme-secondary-message"
+                } border inline-block p-3 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words`}
+              >
+                <div>
+                  {checkIfImage(message.fileUrl) ? (
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setShowImage(true);
+                        setImageURL(message.fileUrl);
+                      }}
+                    >
+                      <img
+                        src={`${HOST}/${message.fileUrl}`}
+                        alt="Sent file"
+                        className="max-h-64 max-w-full object-cover rounded"
+                        onLoad={handleImageLoad}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="text-white/80 text-lg sm:text-xl bg-black/20 rounded-full p-1.5 sm:p-2 flex-shrink-0">
+                          <MdFolderZip />
+                        </span>
+                        <span className="text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]">
+                          {message.fileUrl?.split("/").pop() || "Unknown File"}
+                        </span>
+                      </div>
+                      <button
+                        className="download-option bg-black/20 p-1.5 sm:p-2 text-lg sm:text-xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300 flex-shrink-0 ml-2"
+                        onClick={() => downloadFile(message.fileUrl)}
+                        aria-label="Download file"
+                      >
+                        <IoMdArrowRoundDown />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div
+              className={`text-xs ${
+                isSender ? "text-right" : "text-left"
+              } text-white`}
+            >
+              {moment(message.timestamp || new Date()).format("LT")}
             </div>
           </div>
-        ) : (
-          <div className="text-xs text-white/60 mt-1">
-            {moment(message.timestamp).format("LT")}
-          </div>
-        )}
-      </div>
-    );
+        </div>
+      );
+    });
   };
 
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-hidden p-4 px-8 md:w-[65vw] lg:w-[70vw] xl:w-[80vw] w-full">
-      {renderMessages()}
+    <div
+      ref={containerRef}
+      className={`flex-1 overflow-y-auto p-4 px-8 md:w-[65vw] lg:w-[70vw] xl:w-[80vw] w-full ${
+        theme === "dark" ? "text-white" : "text-black"
+      } custom-scrollbar`}
+      style={{
+        maxHeight: "calc(100vh - 10vh - 4rem)",
+        height: "calc(100vh - 10vh - 4rem)",
+        minHeight: "calc(100vh - 10vh - 4rem)",
+        paddingBottom: "80px", // Add padding to ensure messages aren't hidden behind the message bar
+      }}
+    >
+      {selectedChatType === "channel"
+        ? renderChannelMessages()
+        : renderMessages()}
       <div ref={messageEndRef} />
       {showImage && (
         <div className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col">

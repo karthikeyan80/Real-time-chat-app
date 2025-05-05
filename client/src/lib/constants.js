@@ -13,11 +13,15 @@ export const REMOVE_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/remove-profile-image`;
 export const MESSAGES_ROUTES = "/api/messages";
 export const FETCH_ALL_MESSAGES_ROUTE = `${MESSAGES_ROUTES}/get-messages`;
 export const UPLOAD_FILE = `${MESSAGES_ROUTES}/upload-file`;
+export const DELETE_CHAT = `${MESSAGES_ROUTES}/delete-chat`;
 
 export const CHANNEL_ROUTES = "/api/channel";
 export const CREATE_CHANNEL = `${CHANNEL_ROUTES}/create-channel`;
 export const GET_USER_CHANNELS = `${CHANNEL_ROUTES}/get-user-channels`;
 export const GET_CHANNEL_MESSAGES = `${CHANNEL_ROUTES}/get-channel-messages`;
+export const ADD_MEMBERS_TO_CHANNEL = `${CHANNEL_ROUTES}/add-members`;
+export const LEAVE_CHANNEL = `${CHANNEL_ROUTES}/leave`;
+export const DISBAND_CHANNEL = `${CHANNEL_ROUTES}/disband`;
 
 export const CONTACTS_ROTUES = "/api/contacts";
 export const SEARCH_CONTACTS_ROUTES = `${CONTACTS_ROTUES}/search`;
@@ -27,4 +31,5 @@ export const GET_ALL_CONTACTS = `${CONTACTS_ROTUES}/all-contacts`;
 export const MESSAGE_TYPES = {
   TEXT: "text",
   FILE: "file",
+  AUDIO: "audio",
 };

@@ -1,0 +1,273 @@
+/* Theme CSS Variables */
+:root {
+  --primary: #9333ea; /* Default purple-600 */
+  --primary-light: #f3e8ff; /* Default purple-100 */
+  --primary-dark: #7e22ce; /* Default purple-700 */
+  --chat-background: #2c2e3b; /* Fixed chat background color */
+}
+
+/* Theme-specific styles */
+.theme-default {
+  --primary: #9333ea; /* purple-600 */
+  --primary-light: #f3e8ff; /* purple-100 */
+  --primary-dark: #7e22ce; /* purple-700 */
+}
+
+.theme-dark {
+  --primary: #a855f7; /* purple-500 */
+  --primary-light: #581c87; /* purple-900 */
+  --primary-dark: #7e22ce; /* purple-700 */
+}
+
+.theme-cyberpunk {
+  --primary: #0891b2; /* cyan-600 */
+  --primary-light: #ecfeff; /* cyan-50 */
+  --primary-dark: #0e7490; /* cyan-700 */
+}
+
+.theme-forest {
+  --primary: #16a34a; /* green-600 */
+  --primary-light: #f0fdf4; /* green-50 */
+  --primary-dark: #15803d; /* green-700 */
+}
+
+.theme-ocean {
+  --primary: #2563eb; /* blue-600 */
+  --primary-light: #eff6ff; /* blue-50 */
+  --primary-dark: #1d4ed8; /* blue-700 */
+}
+
+.theme-sunset {
+  --primary: #ea580c; /* orange-600 */
+  --primary-light: #fff7ed; /* orange-50 */
+  --primary-dark: #c2410c; /* orange-700 */
+}
+
+/* Theme utility classes */
+.theme-text {
+  color: var(--primary) !important;
+}
+
+.theme-bg {
+  background-color: var(--primary) !important;
+}
+
+.theme-border {
+  border-color: var(--primary) !important;
+}
+
+.theme-text-light {
+  color: var(--primary-light) !important;
+}
+
+.theme-bg-light {
+  background-color: var(--primary-light) !important;
+}
+
+.theme-border-light {
+  border-color: var(--primary-light) !important;
+}
+
+.theme-text-dark {
+  color: var(--primary-dark) !important;
+}
+
+.theme-bg-dark {
+  background-color: var(--primary-dark) !important;
+}
+
+.theme-border-dark {
+  border-color: var(--primary-dark) !important;
+}
+
+/* Chat bubble theme styles */
+.theme-chat-bubble {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-dark) !important;
+}
+
+/* Add a new utility class for chat background */
+.chat-background {
+  background-color: var(--chat-background) !important;
+}
+
+/* Add this at the end of the file */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Theme button positioning styles */
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.theme-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  transition: transform 0.3s ease-in-out;
+}
+
+.theme-icon:hover {
+  transform: scale(1.1);
+}
+
+@media (max-width: 640px) {
+  .theme-switcher {
+    margin-left: 0.25rem;
+  }
+
+  .theme-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Logo and theme button container */
+.logo-theme-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Theme dropdown positioning */
+.theme-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  z-index: 50;
+  width: max-content;
+  max-width: 200px;
+}
+
+@media (max-width: 480px) {
+  .theme-dropdown {
+    right: -10px;
+    max-width: 180px;
+  }
+}
+
+/* Add these classes to maintain consistent styling for chat header and message bar */
+.chat-header-fixed {
+  background-color: #1b1c24 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.message-bar-fixed {
+  background-color: #1b1c24 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Add these styles to your theme.css file */
+
+/* Ensure all theme backgrounds have consistent behavior */
+[data-theme="cyberpunk"] .bg-[#1b1c24] {
+  background-color: #0c4a6e !important;
+}
+
+[data-theme="default"] .empty-chat-container,
+[data-theme="dark"] .empty-chat-container,
+[data-theme="cyberpunk"] .empty-chat-container,
+[data-theme="forest"] .empty-chat-container,
+[data-theme="ocean"] .empty-chat-container,
+[data-theme="sunset"] .empty-chat-container {
+  transition: background-image 0.3s ease;
+}
+
+/* Ensure the cyberpunk theme background is applied correctly */
+[data-theme="cyberpunk"] .empty-chat-container {
+  background-image: url("/cyberpunk.jpg") !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+/* Add these styles at the end of your theme.css file */
+
+/* Ensure all text messages in non-default themes have white text */
+html[data-theme]:not([data-theme="default"]) .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble * {
+  color: white !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Target all possible text elements with maximum specificity */
+html[data-theme]:not([data-theme="default"]) .chat-bubble p,
+html[data-theme]:not([data-theme="default"]) .chat-bubble span,
+html[data-theme]:not([data-theme="default"]) .chat-bubble div,
+html[data-theme]:not([data-theme="default"]) .chat-bubble a,
+html[data-theme]:not([data-theme="default"]) .chat-bubble strong,
+html[data-theme]:not([data-theme="default"]) .chat-bubble em,
+html[data-theme]:not([data-theme="default"]) .chat-bubble code,
+html[data-theme]:not([data-theme="default"]) .chat-bubble pre {
+  color: white !important;
+}
+
+/* Apply with maximum specificity to override any other styles */
+@media all {
+  html[data-theme]:not([data-theme="default"]) .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-bubble *,
+  html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble *,
+  html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble * {
+    color: white !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+/* Add these styles at the end of your file to fix the blur gap issue */
+.chat-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.chat-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.message-bar-container {
+  position: relative;
+  z-index: 10;
+  margin-bottom: 0;
+  backdrop-filter: blur(8px);
+}
+
+/* Ensure no gaps between message container and message bar */
+.message-container {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Fix for the gap above message bar */
+.flex.flex-col.h-full > div:last-child {
+  margin-top: 0 !important;
+  backdrop-filter: blur(8px);
+}

@@ -28,6 +28,12 @@ const messageSchema = new mongoose.Schema({
       return this.messageType === "audio";
     },
   },
+  voiceName: {
+    type: String,
+    required: function () {
+      return this.messageType === "audio";
+    },
+  },
   fileUrl: {
     type: String,
     required: function () {

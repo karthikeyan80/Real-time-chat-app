@@ -177,7 +177,7 @@ const Profile = () => {
               <Input
                 placeholder="Email"
                 type="email"
-                className="rounded-lg  p-6 bg-[#2c2e3b] border-none"
+                className="rounded-lg p-6 bg-[#2c2e3b] border-none"
                 disabled
                 value={userInfo.email}
               />

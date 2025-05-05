@@ -125,14 +125,14 @@ const NewDM = () => {
                 </div>
               ))}
               {searchedContacts.length <= 0 && (
-                <div className="flex-1  md:flex mt-5  flex-col justify-center items-center hidden duration-1000 transition-all">
+                <div className="flex-1 md:flex mt-5 flex-col justify-center items-center duration-1000 transition-all">
                   <Lottie
                     isClickToPauseDisabled={true}
                     options={animationDefaultOptions}
                     height={100}
                     width={100}
                   />
-                  <div className="text-opacity-80 text-white  flex flex-col gap-5 items-center mt-5 lg:text-2xl text-xl transition-all duration-1000 text-center">
+                  <div className="text-opacity-80 text-white flex flex-col gap-5 items-center mt-5 lg:text-2xl text-xl transition-all duration-1000 text-center">
                     <h3 className="poppins-medium">
                       Hi
                       <span className="text-purple-500">!</span> Search new

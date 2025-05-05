@@ -11,6 +11,9 @@ import Auth from "@/pages/auth";
 import apiClient from "@/lib/api-client";
 import { GET_USERINFO_ROUTE } from "@/lib/constants";
 import { useAppStore } from "@/store";
+import { SyncLoader } from "react-spinners";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import "@/styles/theme.css";
 
 const PrivateRoute = ({ children }) => {
   const { userInfo } = useAppStore();
@@ -54,39 +57,47 @@ function App() {
   }, [userInfo, setUserInfo]);
 
   if (loading) {
-    return <div>Loading...</div>; // Show a loading indicator while fetching user data
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#1a1a1d]">
+        <div className="flex flex-col items-center justify-center">
+          <SyncLoader color="#8417ff" size={15} margin={5} />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route
-          path="/auth"
-          element={
-            <AuthRoute>
-              <Auth />
-            </AuthRoute>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <PrivateRoute>
-              <Chat />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Profile />
-            </PrivateRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/auth" />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          <Route
+            path="/auth"
+            element={
+              <AuthRoute>
+                <Auth />
+              </AuthRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <PrivateRoute>
+                <Chat />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/auth" />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

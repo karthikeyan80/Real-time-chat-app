@@ -5,7 +5,18 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --primary: #9333ea;
+    --primary-light: #f3e8ff;
+    --primary-dark: #7e22ce;
+    --main-background: #1c1d25;
+    --background: #f8f9fa;
+    --background-secondary: #ffffff;
+    --text: #1a1a1a;
+
+    /* Add transition for CSS variables to match background transition */
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out,
+      border-color 0.3s ease-in-out;
+
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -13,8 +24,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --base-200: #1f2937;
+    --base-content: #ffffff;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -75,14 +86,14 @@
   }
 }
 
-.scrollbar-hidden::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+/* Hide scrollbar but allow scrolling */
+.custom-scrollbar {
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
 }
 
-.scrollbar-hidden {
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  scrollbar-width: none; /* Firefox */
+.custom-scrollbar::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Opera */
 }
 
 .bg-login {
@@ -98,4 +109,1096 @@
 .EmojiPickerReact {
   --epr-bg-color: #2a2b33 !important;
   --epr-category-label-bg-color: #2a2b33 !important;
+}
+
+@layer components {
+  .theme-primary-message {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    border-color: var(--primary);
+  }
+
+  .theme-secondary-message {
+    background-color: var(--background-secondary);
+    color: var(--text);
+    border-color: var(--text);
+    opacity: 0.8;
+  }
+
+  .theme-primary-button {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .theme-primary-button:hover {
+    background-color: var(--primary);
+    color: var(--background-secondary);
+  }
+
+  .theme-primary-button-active {
+    background-color: var(--primary);
+    color: var(--background-secondary);
+  }
+
+  .theme-primary-selection {
+    background-color: var(--primary-light);
+    border-color: var(--primary);
+  }
+
+  .theme-secondary-button {
+    background-color: var(--base-200);
+    color: var(--base-content);
+  }
+
+  .theme-secondary-button:hover {
+    background-color: #374151; /* A slightly lighter shade of base-200 */
+  }
+}
+
+/* Apply theme background to main components */
+body {
+  background-color: var(--background);
+  color: var(--text);
+}
+
+/* Main container background */
+/* In your existing CSS, find the section for chat container backgrounds */
+
+/* Main container background - update to use fixed background */
+.fixed.top-0.h-\[100vh\].w-\[100vw\],
+.flex-1.md\:bg-\[#1c1d25\],
+.h-\[10vh\].bg-\[#1c1d25\] {
+  background-color: var(--main-background) !important;
+}
+
+/* Add this new rule to ensure chat inputs and other elements use the fixed background */
+.message-bar,
+.message-bar input,
+.chat-input-container,
+input.rounded-lg.p-6 {
+  background-color: var(--chat-background) !important;
+  border: none;
+}
+
+/* Keep message colors themed but backgrounds fixed */
+.chat-container {
+  background-color: var(--chat-background) !important;
+}
+
+.chat-container {
+  background-color: var(--background-secondary);
+}
+
+.sidebar {
+  background-color: var(--background-secondary);
+}
+
+.message-bar {
+  background-color: transparent;
+  position: relative;
+  z-index: 10;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+  backdrop-filter: blur(8px);
+  margin-top: auto;
+}
+
+/* Keep message colors consistent with theme */
+.chat .chat-bubble {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.chat-start .chat-bubble {
+  background-color: var(--background-secondary);
+  color: var(--text);
+}
+
+.chat-end .chat-bubble {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* Message text colors for better visibility */
+.chat .chat-bubble p,
+.chat .chat-bubble span,
+.chat .chat-bubble div {
+  color: inherit !important;
+}
+
+.chat-start .chat-bubble p,
+.chat-start .chat-bubble span,
+.chat-start .chat-bubble div {
+  color: inherit !important;
+}
+
+.chat-end .chat-bubble p,
+.chat-end .chat-bubble span,
+.chat-end .chat-bubble div {
+  color: inherit !important; /* Changed from #ffffff to inherit */
+}
+
+/* File message styles */
+.chat .chat-bubble .file-message {
+  color: inherit !important;
+}
+
+.chat .chat-bubble .file-name {
+  color: inherit !important;
+}
+
+.chat-end .chat-bubble .file-message,
+.chat-end .chat-bubble .file-name {
+  color: #ffffff !important;
+}
+
+/* Audio message styles */
+.chat .chat-bubble .audio-message {
+  color: inherit !important;
+}
+
+.chat .chat-bubble .audio-duration {
+  color: inherit !important;
+}
+
+.chat-end .chat-bubble .audio-message,
+.chat-end .chat-bubble .audio-duration {
+  color: #ffffff !important;
+}
+
+/* TTS message styles - ensure download options and voice name are visible */
+.chat .chat-bubble .audio-controls button,
+.chat .chat-bubble .audio-controls span,
+.chat .chat-bubble .voice-name,
+.chat .chat-bubble .download-option {
+  color: inherit !important;
+}
+
+.chat-start .chat-bubble .audio-controls button,
+.chat-start .chat-bubble .audio-controls span,
+.chat-start .chat-bubble .voice-name,
+.chat-start .chat-bubble .download-option {
+  color: inherit !important;
+}
+
+.chat-end .chat-bubble .audio-controls button,
+.chat-end .chat-bubble .audio-controls span,
+.chat-end .chat-bubble .voice-name,
+.chat-end .chat-bubble .download-option {
+  color: #ffffff !important;
+}
+
+/* Override colors for non-default themes */
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble,
+[data-theme]:not([data-theme="light"]) .chat-end .chat-bubble {
+  color: white !important;
+}
+
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble p,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble span,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble div,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .file-message,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .file-name,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .audio-message,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .audio-duration,
+[data-theme]:not([data-theme="light"])
+  .chat
+  .chat-bubble
+  .audio-controls
+  button,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .audio-controls span,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .voice-name,
+[data-theme]:not([data-theme="light"]) .chat .chat-bubble .download-option {
+  color: white !important;
+}
+
+/* Add these rules at the end of your CSS file to specifically target DM messages */
+
+/* Target DM messages specifically with higher specificity */
+html[data-theme]:not([data-theme="default"]) .chat-container .chat .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-start
+  .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-end
+  .chat-bubble {
+  color: white !important;
+}
+
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat
+  .chat-bubble
+  *,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-start
+  .chat-bubble
+  *,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-end
+  .chat-bubble
+  * {
+  color: white !important;
+}
+
+/* Target specific message content in DMs */
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat
+  .chat-bubble
+  p,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat
+  .chat-bubble
+  span,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat
+  .chat-bubble
+  div,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-start
+  .chat-bubble
+  p,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-start
+  .chat-bubble
+  span,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-start
+  .chat-bubble
+  div,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-end
+  .chat-bubble
+  p,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-end
+  .chat-bubble
+  span,
+html[data-theme]:not([data-theme="default"])
+  .chat-container
+  .chat-end
+  .chat-bubble
+  div {
+  color: white !important;
+}
+
+/* Force white text for all message types in DMs */
+html[data-theme]:not([data-theme="default"]) .direct-message .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .direct-message .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .dm-message .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .dm-message .chat-bubble * {
+  color: white !important;
+}
+
+/* Override colors for non-default themes - Make this more specific and comprehensive */
+/* Replace the existing non-default theme color overrides with this more specific version */
+/* Force white text for all non-default themes - highest priority override */
+html[data-theme]:not([data-theme="default"]) .chat .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble {
+  color: white !important;
+}
+
+/* Target all text elements in chat bubbles for both DMs and channels */
+html[data-theme]:not([data-theme="default"]) .chat .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble * {
+  color: white !important;
+}
+
+/* Ensure channel messages also get the white text */
+html[data-theme]:not([data-theme="default"]) .channel-message .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .channel-message .chat-bubble * {
+  color: white !important;
+}
+
+/* Override any inline styles with !important */
+html[data-theme]:not([data-theme="default"]) [style*="color"] {
+  color: white !important;
+}
+
+/* Ensure this applies to all screen sizes */
+@media all {
+  html[data-theme]:not([data-theme="default"]) .chat .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .channel-message .chat-bubble {
+    color: white !important;
+  }
+
+  html[data-theme]:not([data-theme="default"]) .chat .chat-bubble *,
+  html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble *,
+  html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble *,
+  html[data-theme]:not([data-theme="default"]) .channel-message .chat-bubble * {
+    color: white !important;
+  }
+}
+
+/* Add !important to all text elements to ensure they override any other styles */
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble *,
+[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble *,
+[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble * {
+  color: white !important;
+}
+
+/* Add specific rules for common text elements to ensure they're covered */
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble p,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble span,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble div,
+[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble p,
+[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble span,
+[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble div,
+[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble p,
+[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble span,
+[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble div {
+  color: white !important;
+}
+
+/* Ensure these rules apply at the end of the stylesheet to override everything else */
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble .file-message,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble .file-name,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble .audio-message,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble .audio-duration,
+[data-theme]:not([data-theme="default"])
+  .chat
+  .chat-bubble
+  .audio-controls
+  button,
+[data-theme]:not([data-theme="default"])
+  .chat
+  .chat-bubble
+  .audio-controls
+  span,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble .voice-name,
+[data-theme]:not([data-theme="default"]) .chat .chat-bubble .download-option {
+  color: white !important;
+}
+
+/* Ensure this applies to mobile as well */
+@media (max-width: 768px) {
+  [data-theme]:not([data-theme="default"]) .chat .chat-bubble,
+  [data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+  [data-theme]:not([data-theme="default"]) .chat-end .chat-bubble,
+  [data-theme]:not([data-theme="default"]) .chat .chat-bubble p,
+  [data-theme]:not([data-theme="default"]) .chat .chat-bubble span,
+  [data-theme]:not([data-theme="default"]) .chat .chat-bubble div {
+    color: white !important;
+  }
+}
+
+/* Message bar button styles */
+.message-bar button {
+  @apply theme-primary-button;
+}
+
+.message-bar button:hover {
+  background-color: var(--primary);
+  color: var(--background-secondary);
+}
+
+/* TTS button styles */
+.message-bar .tts-button {
+  @apply rounded-md flex items-center justify-center p-2 sm:p-3 gap-2 focus:border-none focus:outline-none transition-all duration-300 flex-shrink-0;
+  background-color: var(--base-200);
+  color: var(--base-content);
+  min-width: 80px;
+}
+
+.message-bar .tts-button:hover {
+  background-color: #374151; /* A slightly lighter shade of base-200 */
+}
+
+.message-bar .tts-button.active {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.message-bar .tts-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.message-bar .send-button {
+  @apply rounded-md flex items-center justify-center p-3 sm:p-5 gap-2 focus:border-none focus:outline-none transition-all duration-300 flex-shrink-0 theme-primary-button;
+}
+
+.message-bar .send-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Chat container selection styles */
+.chat-container.selected {
+  @apply theme-primary-selection;
+}
+
+/* Message Bar Button Styles */
+.tts-button {
+  @apply rounded-md flex items-center justify-center p-2 sm:p-3 gap-2 focus:border-none focus:outline-none transition-all duration-300 flex-shrink-0;
+  background-color: var(--base-200);
+  color: var(--base-content);
+  min-width: 80px;
+}
+
+.tts-button:hover {
+  background-color: #374151; /* A slightly lighter shade of base-200 */
+}
+
+.tts-button.active {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.tts-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.send-button {
+  @apply rounded-md flex items-center justify-center p-3 sm:p-5 gap-2 focus:border-none focus:outline-none transition-all duration-300 flex-shrink-0 theme-primary-button;
+}
+
+.send-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Theme Button Styles */
+.theme-primary-button {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  transition: all 0.3s ease-in-out;
+}
+
+.theme-primary-button:hover {
+  background-color: var(--primary);
+  color: var(--background-secondary);
+}
+
+.theme-secondary-button {
+  background-color: var(--base-200);
+  color: var(--base-content);
+}
+
+.theme-secondary-button:hover {
+  background-color: #374151; /* A slightly lighter shade of base-200 */
+}
+
+/* Message Bar Input Styles - Ensure text is visible in all themes */
+.message-bar input[type="text"],
+.message-bar input[placeholder="Type a message..."] {
+  color: var(--base-content) !important;
+  background-color: transparent !important;
+}
+
+/* TTS Controls - Ensure visibility in all themes */
+.message-bar select {
+  background-color: var(--base-200) !important;
+  color: var(--base-content) !important;
+  border: 1px solid var(--primary) !important;
+}
+
+.message-bar select option {
+  background-color: var(--base-200) !important;
+  color: var(--base-content) !important;
+}
+
+/* Ensure TTS button text is visible */
+.tts-button,
+.message-bar .tts-button {
+  color: var(--base-content) !important;
+  font-weight: 500 !important;
+}
+
+.tts-button.active,
+.message-bar .tts-button.active {
+  color: var(--primary-dark) !important;
+  font-weight: 600 !important;
+}
+
+/* Ensure message bar icons are visible */
+.message-bar .text-neutral-300 {
+  color: var(--base-content) !important;
+}
+
+.message-bar .text-neutral-300:hover {
+  color: var(--primary-light) !important;
+}
+
+/* Toast Notification Styles - Keep original colors */
+.toaster {
+  --toast-bg: #ffffff !important;
+  --toast-text: #000000 !important;
+  --toast-border: #e5e7eb !important;
+}
+
+.toaster [data-theme] {
+  --toast-bg: #ffffff !important;
+  --toast-text: #000000 !important;
+  --toast-border: #e5e7eb !important;
+}
+
+.toaster .toast {
+  background-color: var(--toast-bg) !important;
+  color: var(--toast-text) !important;
+  border-color: var(--toast-border) !important;
+}
+
+.toaster .toast .description {
+  color: var(--toast-text) !important;
+  opacity: 0.8;
+}
+
+.toaster .toast .actionButton {
+  background-color: var(--primary) !important;
+  color: var(--toast-text) !important;
+}
+
+.toaster .toast .cancelButton {
+  background-color: transparent !important;
+  color: var(--toast-text) !important;
+}
+
+/* Add loading animation styles */
+.contacts-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 150px;
+  width: 100%;
+  padding: 1rem;
+}
+
+.contacts-loading {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+.channels-loading {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Track color */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888; /* Thumb color */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Thumb color on hover */
+}
+
+/* Apply blur effect for default theme */
+.bg-blur {
+  backdrop-filter: blur(10px); /* Adjust the blur intensity as needed */
+}
+
+/* Ensure the emoji picker is not affected by the blur */
+.emoji-picker {
+  backdrop-filter: none !important; /* Override blur effect */
+  position: relative; /* Ensure it appears above the blurred background */
+  z-index: 10; /* Ensure it is visible above other elements */
+}
+
+/* Fixed color for chat header and message bar */
+.chat-header,
+.message-bar {
+  background-color: #1b1c24 !important; /* Fixed dark background color */
+  color: #ffffff !important; /* Fixed text color */
+}
+
+/* Ensure input and button elements within the message bar are styled consistently */
+.message-bar input,
+.message-bar button {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+/* Emoji picker container styles */
+.emoji-picker-container {
+  background: #1f1f1f;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 1000;
+}
+
+.emoji-picker-container > div {
+  min-width: 280px !important;
+}
+
+@media (max-width: 640px) {
+  .emoji-picker-container {
+    right: 50% !important;
+    transform: translateX(50%);
+    max-width: 95vw;
+  }
+}
+
+/* Ensure download button is visible in all themes */
+.download-option {
+  color: white !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Make file message responsive */
+@media (max-width: 640px) {
+  .chat .chat-bubble .file-message {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chat .chat-bubble .download-option {
+    margin-top: 8px;
+    margin-left: 0;
+  }
+}
+
+/* Update the theme background section to ensure all themes work properly */
+
+/* Ensure all backgrounds have consistent styling */
+.flex-1.overflow-hidden.relative,
+.flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  transition: background-image 0.3s ease-in-out !important;
+}
+
+/* Ensure background images are properly applied to all containers for all themes */
+[data-theme="default"] .flex-1.overflow-hidden.relative,
+[data-theme="default"]
+  .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-image: url("/purple.jpg") !important;
+}
+
+[data-theme="dark"] .flex-1.overflow-hidden.relative,
+[data-theme="dark"]
+  .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-image: url("/dark.jpg") !important;
+}
+
+[data-theme="cyberpunk"] .flex-1.overflow-hidden.relative,
+[data-theme="cyberpunk"]
+  .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-image: url("/cyberpunk.jpg") !important;
+}
+
+[data-theme="forest"] .flex-1.overflow-hidden.relative,
+[data-theme="forest"]
+  .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-image: url("/forest.jpg") !important;
+}
+
+[data-theme="ocean"] .flex-1.overflow-hidden.relative,
+[data-theme="ocean"]
+  .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-image: url("/ocean.jpg") !important;
+}
+
+[data-theme="sunset"] .flex-1.overflow-hidden.relative,
+[data-theme="sunset"]
+  .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+  background-image: url("/sunset.jpg") !important;
+}
+
+/* Improve message container readability across all themes with smooth transitions */
+[data-theme] .message-container {
+  backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease-in-out,
+    backdrop-filter 0.3s ease-in-out !important;
+}
+
+/* Ensure consistent overlay for all themes with smooth transitions */
+.absolute.inset-0.bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  transition: background-color 0.3s ease-in-out,
+    backdrop-filter 0.3s ease-in-out !important;
+}
+
+/* Ensure consistent styling for the welcome message container with smooth transitions */
+.flex.flex-col.items-center.bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  transition: background-color 0.3s ease-in-out,
+    backdrop-filter 0.3s ease-in-out !important;
+}
+
+/* Add responsive adjustments for different screen sizes */
+@media (max-width: 768px) {
+  /* Ensure backgrounds work properly on mobile */
+  [data-theme] .flex-1.overflow-hidden.relative,
+  [data-theme] .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: scroll !important; /* Better for mobile */
+  }
+
+  /* Adjust overlay for better mobile experience */
+  .absolute.inset-0.bg-black\/40 {
+    background-color: rgba(
+      0,
+      0,
+      0,
+      0.5
+    ) !important; /* Slightly darker for better readability on mobile */
+  }
+
+  /* Ensure text remains readable on mobile */
+  .text-opacity-80.text-white {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  [data-theme] .message-container {
+    backdrop-filter: blur(
+      8px
+    ); /* Increase blur on smaller screens for better readability */
+    background-color: rgba(
+      0,
+      0,
+      0,
+      0.4
+    ); /* Slightly darker background on mobile */
+  }
+}
+
+/* Ensure the chat container overrides any other background settings */
+.chat-container {
+  background-color: transparent !important;
+}
+
+/* FINAL OVERRIDE: Target receiver messages specifically */
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble {
+  color: white !important;
+}
+
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble p,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble span,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble div,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble a,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble * {
+  color: white !important;
+}
+
+/* Target the theme-secondary-message class specifically which is likely used for receiver messages */
+html[data-theme]:not([data-theme="default"]) .theme-secondary-message,
+html[data-theme]:not([data-theme="default"]) .theme-secondary-message * {
+  color: white !important;
+}
+
+/* Override any inline styles that might be applied to receiver messages */
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble [style],
+html[data-theme]:not([data-theme="default"]) .theme-secondary-message [style] {
+  color: white !important;
+}
+
+/* Target the actual text content directly */
+html[data-theme]:not([data-theme="default"])
+  .chat-start
+  .chat-bubble
+  .chat-text,
+html[data-theme]:not([data-theme="default"])
+  .chat-start
+  .chat-bubble
+  .chat-content,
+html[data-theme]:not([data-theme="default"])
+  .chat-start
+  .chat-bubble
+  .message-text {
+  color: white !important;
+}
+
+/* Target all possible text elements with maximum specificity */
+html[data-theme]:not([data-theme="default"]) .chat-bubble p,
+html[data-theme]:not([data-theme="default"]) .chat-bubble span,
+html[data-theme]:not([data-theme="default"]) .chat-bubble div,
+html[data-theme]:not([data-theme="default"]) .chat-bubble a,
+html[data-theme]:not([data-theme="default"]) .chat-bubble strong,
+html[data-theme]:not([data-theme="default"]) .chat-bubble em,
+html[data-theme]:not([data-theme="default"]) .chat-bubble code,
+html[data-theme]:not([data-theme="default"]) .chat-bubble pre,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble p,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble span,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble div,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble a,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble strong,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble em,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble code,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble pre {
+  color: white !important;
+}
+
+/* Override any inline styles */
+html[data-theme]:not([data-theme="default"]) .chat-bubble [style*="color"],
+html[data-theme]:not([data-theme="default"])
+  .chat-start
+  .chat-bubble
+  [style*="color"] {
+  color: white !important;
+}
+
+/* Force this to apply to all elements regardless of other styles */
+@media all {
+  html[data-theme]:not([data-theme="default"]) .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-bubble *,
+  html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble * {
+    color: white !important;
+  }
+}
+
+/* Target specific message types that might be causing issues */
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble.theme-secondary-message,
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble.theme-secondary-message
+  *,
+html[data-theme]:not([data-theme="default"])
+  .chat-start
+  .chat-bubble.theme-secondary-message,
+html[data-theme]:not([data-theme="default"])
+  .chat-start
+  .chat-bubble.theme-secondary-message
+  * {
+  color: white !important;
+}
+
+/* Ensure default theme keeps black text */
+/* Ensure default theme keeps correct text colors for both sender and receiver messages */
+html[data-theme="default"] .chat-start .chat-bubble,
+html[data-theme="default"] .chat-start .chat-bubble *,
+html[data-theme="default"] .chat-end .chat-bubble,
+html[data-theme="default"] .chat-end .chat-bubble * {
+  color: var(--text) !important;
+}
+
+/* Specifically target sender messages in default theme */
+html[data-theme="default"] .chat-end .chat-bubble,
+html[data-theme="default"] .chat-end .chat-bubble p,
+html[data-theme="default"] .chat-end .chat-bubble span,
+html[data-theme="default"] .chat-end .chat-bubble div,
+html[data-theme="default"] .chat-end .chat-bubble a,
+html[data-theme="default"] .chat-end .chat-bubble * {
+  color: var(--primary-dark) !important;
+}
+
+/* Override any previous white text rules for default theme with higher specificity */
+@media all {
+  html[data-theme="default"] .chat-bubble,
+  html[data-theme="default"] .chat-bubble *,
+  html[data-theme="default"] .chat-start .chat-bubble,
+  html[data-theme="default"] .chat-start .chat-bubble * {
+    color: var(--text) !important;
+  }
+
+  html[data-theme="default"] .chat-end .chat-bubble,
+  html[data-theme="default"] .chat-end .chat-bubble * {
+    color: var(--primary-dark) !important;
+  }
+}
+
+/* Add these specific rules to target both DM and channel messages consistently */
+html[data-theme]:not([data-theme="default"]) .direct-message .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .direct-message .chat-bubble *,
+html[data-theme]:not([data-theme="default"])
+  .direct-message
+  .chat-start
+  .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  .direct-message
+  .chat-start
+  .chat-bubble
+  *,
+html[data-theme]:not([data-theme="default"])
+  .direct-message
+  .chat-end
+  .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  .direct-message
+  .chat-end
+  .chat-bubble
+  * {
+  color: white !important;
+}
+
+/* Target DM messages with the highest specificity possible */
+html[data-theme]:not([data-theme="default"]) [data-chat-type="dm"] .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  [data-chat-type="dm"]
+  .chat-bubble
+  *,
+html[data-theme]:not([data-theme="default"])
+  [data-chat-type="dm"]
+  .chat-start
+  .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  [data-chat-type="dm"]
+  .chat-start
+  .chat-bubble
+  *,
+html[data-theme]:not([data-theme="default"])
+  [data-chat-type="dm"]
+  .chat-end
+  .chat-bubble,
+html[data-theme]:not([data-theme="default"])
+  [data-chat-type="dm"]
+  .chat-end
+  .chat-bubble
+  * {
+  color: white !important;
+}
+
+/* Ensure all message types in all chat contexts have white text in non-default themes */
+html[data-theme]:not([data-theme="default"]) .chat-container .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-container .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .message-container .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .message-container .chat-bubble * {
+  color: white !important;
+}
+
+/* Force this to apply to all elements regardless of other styles with maximum specificity */
+@media all {
+  html[data-theme]:not([data-theme="default"]) .direct-message .chat-bubble,
+  html[data-theme]:not([data-theme="default"]) .direct-message .chat-bubble *,
+  html[data-theme]:not([data-theme="default"])
+    [data-chat-type="dm"]
+    .chat-bubble,
+  html[data-theme]:not([data-theme="default"])
+    [data-chat-type="dm"]
+    .chat-bubble
+    * {
+    color: white !important;
+  }
+}
+
+/* FINAL OVERRIDE: Ensure white text for all chat bubble content in non-default themes (DM and channel, sender and receiver) */
+html[data-theme]:not([data-theme="default"]) .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-start .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble,
+html[data-theme]:not([data-theme="default"]) .chat-end .chat-bubble *,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .file-message,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .file-name,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .audio-message,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .audio-duration,
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .audio-controls
+  button,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .audio-controls span,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .voice-name,
+html[data-theme]:not([data-theme="default"]) .chat-bubble .download-option {
+  color: #fff !important;
+}
+
+/* Ensure both sender and receiver chat bubbles are white in non-default themes */
+html[data-theme]:not([data-theme="default"]) .theme-primary-message,
+html[data-theme]:not([data-theme="default"]) .theme-secondary-message {
+  color: #fff !important;
+}
+
+/* Make audio option buttons more visible in non-default themes for both sender and receiver */
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-primary-message
+  .theme-primary-button,
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-secondary-message
+  .theme-primary-button {
+  background-color: #fff !important;
+  color: #222 !important;
+}
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-primary-message
+  .theme-primary-button:hover,
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-secondary-message
+  .theme-primary-button:hover {
+  background-color: #f3e8ff !important;
+  color: #8417ff !important;
+}
+
+/* In default theme, TTS audio messages have the same color as text messages for both sender and receiver */
+html[data-theme="default"] .theme-primary-message,
+html[data-theme="default"] .theme-secondary-message {
+  color: var(--text) !important;
+}
+
+/* Ensure TTS audio option buttons are consistent for sender and receiver in non-default themes (DM and channel) */
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-primary-message
+  .theme-primary-button,
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-secondary-message
+  .theme-primary-button {
+  background-color: #fff !important;
+  color: #222 !important;
+}
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-primary-message
+  .theme-primary-button:hover,
+html[data-theme]:not([data-theme="default"])
+  .chat-bubble
+  .theme-secondary-message
+  .theme-primary-button:hover {
+  background-color: #f3e8ff !important;
+  color: #8417ff !important;
 }

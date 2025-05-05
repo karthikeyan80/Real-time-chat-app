@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
+import { genSalt, hash, compare } from "bcrypt";
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -33,22 +33,41 @@ const userSchema = new mongoose.Schema({
   },
 });
 
+// Only hash the password if it's been modified or is new
 userSchema.pre("save", async function (next) {
-  const salt = await bcrypt.genSalt();
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+  // Skip if the password hasn't been modified
+  if (!this.isModified("password")) return next();
+
+  try {
+    console.log("Hashing password for user:", this.email);
+    const salt = await genSalt(10); // Use a consistent salt rounds value
+    this.password = await hash(this.password, salt);
+    console.log("Password hashed successfully");
+    next();
+  } catch (error) {
+    console.error("Error hashing password:", error);
+    next(error);
+  }
 });
 
 userSchema.statics.login = async function (email, password) {
-  const user = await this.findOne({ email });
-  if (user) {
-    const auth = await bcrypt.compare(password, user.password);
-    if (auth) {
-      return user;
+  try {
+    console.log(`Static login attempt for email: ${email}`);
+    const user = await this.findOne({ email });
+    if (user) {
+      console.log(`User found: ${user.id}, comparing passwords...`);
+      const auth = await compare(password, user.password);
+      console.log(`Password comparison result: ${auth}`);
+      if (auth) {
+        return user;
+      }
+      throw Error("incorrect password");
     }
-    throw Error("incorrect password");
+    throw Error("incorrect email");
+  } catch (error) {
+    console.error("Error in static login:", error);
+    throw error;
   }
-  throw Error("incorrect email");
 };
 
 const User = mongoose.model("Users", userSchema);

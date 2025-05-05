@@ -1,3 +1,5 @@
+import { removeChannelById, addChannelIfNotExists } from "@/utils/channelUtils";
+
 export const createChatSlice = (set, get) => ({
   selectedChatType: undefined,
   selectedChatData: undefined,
@@ -47,7 +49,47 @@ export const createChatSlice = (set, get) => ({
   },
   addChannel: (channel) => {
     const channels = get().channels;
-    set({ channels: [channel, ...channels] });
+    const updatedChannels = addChannelIfNotExists(channels, channel);
+    set({ channels: updatedChannels });
+  },
+  updateChannelMembers: (channelId, newMembers) => {
+    const channels = get().channels;
+    const updatedChannels = channels.map((channel) => {
+      if (channel._id === channelId) {
+        return {
+          ...channel,
+          members: [...channel.members, ...newMembers],
+        };
+      }
+      return channel;
+    });
+    set({ channels: updatedChannels });
+
+    // Also update the selected chat data if it's the current channel
+    const selectedChatData = get().selectedChatData;
+    if (selectedChatData && selectedChatData._id === channelId) {
+      set({
+        selectedChatData: {
+          ...selectedChatData,
+          members: [...selectedChatData.members, ...newMembers],
+        },
+      });
+    }
+  },
+  removeChannel: (channelId) => {
+    const channels = get().channels;
+    const updatedChannels = removeChannelById(channels, channelId);
+    set({ channels: updatedChannels });
+
+    // If the removed channel was selected, close the chat
+    const selectedChatData = get().selectedChatData;
+    if (selectedChatData && selectedChatData._id === channelId) {
+      set({
+        selectedChatData: undefined,
+        selectedChatType: undefined,
+        selectedChatMessages: [],
+      });
+    }
   },
   addContactInDMContacts: (message) => {
     console.log({ message });
