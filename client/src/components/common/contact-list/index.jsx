@@ -175,9 +175,9 @@ const ContactList = ({ contacts, isChannel = false }) => {
           const themePrimaryColors = {
             default: "#8417ff",
             dark: "#1e293b",
-            cyberpunk: "#06b6d4",
-            forest: "#16a34a",
-            ocean: "#2563eb",
+            cyan: "#06b6d4",
+            green: "#16a34a",
+            blue: "#2563eb",
             sunset: "#ea580c",
           };
           const isSelected =
