@@ -14,7 +14,7 @@ const ThemeSwitcher = () => {
         setIsOpen(false);
       }
     };
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -22,22 +22,25 @@ const ThemeSwitcher = () => {
   const themeColors = {
     default: "bg-purple-600",
     dark: "bg-purple-500",
-    cyberpunk: "bg-cyan-600",
-    forest: "bg-green-600",
-    ocean: "bg-blue-600",
+    cyan: "bg-cyan-600",
+    green: "bg-green-600",
+    blue: "bg-blue-600",
     sunset: "bg-orange-600",
   };
 
   return (
-    <div className="theme-switcher relative flex items-center" ref={dropdownRef}>
+    <div
+      className="theme-switcher relative flex items-center"
+      ref={dropdownRef}
+    >
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center bg-transparent hover:bg-black/10 rounded-full p-1 transition-all duration-300"
         aria-label="Theme switcher"
       >
-        <img 
-          src="/brush.png" 
-          alt="Theme" 
+        <img
+          src="/brush.png"
+          alt="Theme"
           className="theme-icon filter hue-rotate-[330deg] w-5 h-5 md:w-6 md:h-6"
         />
       </button>
@@ -56,7 +59,9 @@ const ThemeSwitcher = () => {
                   theme === themeName ? "bg-black/30 text-white" : ""
                 }`}
               >
-                <div className={`w-4 h-4 rounded-full ${themeColors[themeName]}`} />
+                <div
+                  className={`w-4 h-4 rounded-full ${themeColors[themeName]}`}
+                />
                 <span className="capitalize">{themeName}</span>
               </button>
             ))}

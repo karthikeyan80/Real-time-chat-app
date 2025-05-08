@@ -162,8 +162,18 @@ export const getChannelMessages = async (req, res, next) => {
       return res.status(404).json({ message: "Channel not found" });
     }
 
-    const messages = channel.messages;
-    return res.status(200).json({ messages });
+    // Ensure messages have status field visible
+    const messagesWithStatus = channel.messages.map((message) => {
+      // Convert to plain object to include all fields including status
+      const messageObj = message.toObject ? message.toObject() : message;
+      // Make sure status field exists
+      if (!messageObj.status) {
+        messageObj.status = "sent";
+      }
+      return messageObj;
+    });
+
+    return res.status(200).json({ messages: messagesWithStatus });
   } catch (error) {
     console.error("Error getting channel messages:", error);
     return res.status(500).json({ message: "Internal Server Error" });

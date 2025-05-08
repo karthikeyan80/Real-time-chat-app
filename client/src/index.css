@@ -827,20 +827,20 @@ html[data-theme]:not([data-theme="default"]) [style*="color"] {
   background-image: url("/dark.jpg") !important;
 }
 
-[data-theme="cyberpunk"] .flex-1.overflow-hidden.relative,
-[data-theme="cyberpunk"]
+[data-theme="cyan"] .flex-1.overflow-hidden.relative,
+[data-theme="cyan"]
   .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
   background-image: url("/cyberpunk.jpg") !important;
 }
 
-[data-theme="forest"] .flex-1.overflow-hidden.relative,
-[data-theme="forest"]
+[data-theme="green"] .flex-1.overflow-hidden.relative,
+[data-theme="green"]
   .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
   background-image: url("/forest.jpg") !important;
 }
 
-[data-theme="ocean"] .flex-1.overflow-hidden.relative,
-[data-theme="ocean"]
+[data-theme="blue"] .flex-1.overflow-hidden.relative,
+[data-theme="blue"]
   .flex-1.md\:flex.flex-col.justify-center.items-center.hidden {
   background-image: url("/ocean.jpg") !important;
 }

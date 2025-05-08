@@ -19,10 +19,51 @@ export const getMessages = async (req, res, next) => {
       .sort({ timestamp: 1 })
       .populate("sender", "firstName lastName image color") // Populate sender details
       .select(
-        "content sender recipient messageType fileUrl audioUrl voiceName timestamp"
+        "content sender recipient messageType fileUrl audioUrl voiceName timestamp status"
       );
 
-    return res.status(200).json({ messages });
+    // Mark messages as read when fetched by recipient
+    const unreadMessages = messages.filter(
+      (msg) =>
+        msg.sender._id.toString() !== user1 &&
+        (msg.status === "sent" || msg.status === "delivered")
+    );
+
+    if (unreadMessages.length > 0) {
+      // Update status to read for messages from the other user
+      await Message.updateMany(
+        {
+          _id: { $in: unreadMessages.map((msg) => msg._id) },
+        },
+        { status: "read" }
+      );
+
+      // Get the socket.io instance
+      const io = req.app.get("io");
+
+      // Notify sender about read messages
+      if (io) {
+        unreadMessages.forEach((msg) => {
+          io.to(user2).emit("message-status-update", {
+            ...msg.toObject(),
+            status: "read",
+          });
+        });
+      }
+    }
+
+    // Update the status in the response for proper client-side display
+    const updatedMessages = messages.map((msg) => {
+      if (
+        msg.sender._id.toString() !== user1 &&
+        (msg.status === "sent" || msg.status === "delivered")
+      ) {
+        return { ...msg.toObject(), status: "read" };
+      }
+      return msg;
+    });
+
+    return res.status(200).json({ messages: updatedMessages });
   } catch (err) {
     console.log(err);
     return res.status(500).send("Internal Server Error");

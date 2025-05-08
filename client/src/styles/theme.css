@@ -19,19 +19,19 @@
   --primary-dark: #7e22ce; /* purple-700 */
 }
 
-.theme-cyberpunk {
+.theme-cyan {
   --primary: #0891b2; /* cyan-600 */
   --primary-light: #ecfeff; /* cyan-50 */
   --primary-dark: #0e7490; /* cyan-700 */
 }
 
-.theme-forest {
+.theme-green {
   --primary: #16a34a; /* green-600 */
   --primary-light: #f0fdf4; /* green-50 */
   --primary-dark: #15803d; /* green-700 */
 }
 
-.theme-ocean {
+.theme-blue {
   --primary: #2563eb; /* blue-600 */
   --primary-light: #eff6ff; /* blue-50 */
   --primary-dark: #1d4ed8; /* blue-700 */
@@ -180,21 +180,21 @@
 /* Add these styles to your theme.css file */
 
 /* Ensure all theme backgrounds have consistent behavior */
-[data-theme="cyberpunk"] .bg-[#1b1c24] {
+[data-theme="cyan"] .bg-[#1b1c24] {
   background-color: #0c4a6e !important;
 }
 
 [data-theme="default"] .empty-chat-container,
 [data-theme="dark"] .empty-chat-container,
-[data-theme="cyberpunk"] .empty-chat-container,
-[data-theme="forest"] .empty-chat-container,
-[data-theme="ocean"] .empty-chat-container,
+[data-theme="cyan"] .empty-chat-container,
+[data-theme="green"] .empty-chat-container,
+[data-theme="blue"] .empty-chat-container,
 [data-theme="sunset"] .empty-chat-container {
   transition: background-image 0.3s ease;
 }
 
-/* Ensure the cyberpunk theme background is applied correctly */
-[data-theme="cyberpunk"] .empty-chat-container {
+/* Ensure the cyan theme background is applied correctly */
+[data-theme="cyan"] .empty-chat-container {
   background-image: url("/cyberpunk.jpg") !important;
   background-size: cover !important;
   background-position: center !important;

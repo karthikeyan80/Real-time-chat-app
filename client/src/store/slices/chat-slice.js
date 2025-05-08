@@ -47,6 +47,62 @@ export const createChatSlice = (set, get) => ({
       ],
     });
   },
+  updateMessageStatus: (messageId, status) => {
+    const selectedChatMessages = get().selectedChatMessages;
+
+    console.log(`🔧 Store: Updating message ${messageId} to status: ${status}`);
+
+    if (!Array.isArray(selectedChatMessages)) {
+      console.error(
+        "❌ selectedChatMessages is not an array:",
+        selectedChatMessages
+      );
+      return;
+    }
+
+    // Find the message by ID
+    const targetMessage = selectedChatMessages.find(
+      (msg) => msg._id === messageId
+    );
+    if (!targetMessage) {
+      console.warn(
+        `⚠️ Message with ID ${messageId} not found in current messages`
+      );
+      // Continue anyway in case there's a reference mismatch but ID is correct
+    } else {
+      console.log(
+        `✅ Found message to update: ${targetMessage._id} from ${targetMessage.status} to ${status}`
+      );
+    }
+
+    // Create a completely new array to guarantee React re-renders
+    const updatedMessages = selectedChatMessages.map((message) => {
+      if (message._id === messageId) {
+        // Create a completely new object for the message
+        return {
+          ...message,
+          status,
+          _updatedAt: new Date().getTime(), // Add a timestamp to force React to see this as a new object
+        };
+      }
+      return message;
+    });
+
+    // Use a completely new array reference and schedule an immediate update
+    console.log(`📊 Updated messages array (${updatedMessages.length} items)`);
+
+    // Force a synchronous update to the state
+    set((state) => ({
+      ...state,
+      selectedChatMessages: [...updatedMessages],
+    }));
+
+    // Schedule another update after a short delay to ensure UI refresh
+    setTimeout(() => {
+      const currentMessages = get().selectedChatMessages;
+      set({ selectedChatMessages: [...currentMessages] });
+    }, 50);
+  },
   addChannel: (channel) => {
     const channels = get().channels;
     const updatedChannels = addChannelIfNotExists(channels, channel);

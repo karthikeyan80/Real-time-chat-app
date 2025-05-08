@@ -16,6 +16,8 @@ import { IoCloseSharp } from "react-icons/io5";
 import { MdFolderZip } from "react-icons/md";
 import { IoVolumeHigh } from "react-icons/io5";
 import { IoPause, IoPlay } from "react-icons/io5";
+import MessageStatus from "@/components/ui/message-status";
+import { useSocket } from "@/contexts/SocketContext";
 
 const MessageContainer = () => {
   const [showImage, setShowImage] = useState(false);
@@ -40,6 +42,7 @@ const MessageContainer = () => {
   const optionsRef = useRef(null);
   const messageRefs = useRef({});
   const containerRef = useRef(null);
+  const socket = useSocket();
 
   const cleanTextForSpeech = (text) => {
     return text.replace(/[^\p{L}\p{N}\s.,!?]/gu, ""); // Remove all non-alphanumeric characters except punctuation
@@ -119,6 +122,126 @@ const MessageContainer = () => {
   };
 
   useEffect(() => {
+    // Add event listener for message status updates
+    if (socket) {
+      // Listen for message status updates
+      const handleMessageStatusUpdate = (updatedMessage) => {
+        console.log(
+          "📱 MessageContainer: Received status update:",
+          updatedMessage
+        );
+
+        // Verify we have a valid message
+        if (!updatedMessage || !updatedMessage._id || !updatedMessage.status) {
+          console.error("❌ Invalid message status update received");
+          return;
+        }
+
+        // For debugging: check if this is a message sent by the current user
+        const isUserMessage =
+          updatedMessage.sender &&
+          (updatedMessage.sender._id === userInfo.id ||
+            updatedMessage.sender === userInfo.id);
+
+        if (isUserMessage) {
+          console.log(
+            `🔔 This is your message being marked as ${updatedMessage.status}`
+          );
+        }
+
+        // Update the messages state with a completely new array reference
+        setSelectedChatMessages((prevMessages) => {
+          if (!Array.isArray(prevMessages)) {
+            console.error("❌ prevMessages is not an array");
+            return prevMessages;
+          }
+
+          let messageFound = false;
+
+          // Create a totally new array with updated message
+          const updatedMessages = prevMessages.map((message) => {
+            if (message._id === updatedMessage._id) {
+              messageFound = true;
+              console.log(
+                `🔄 UI Update: Message ${message._id} status changing from ${message.status} to ${updatedMessage.status}`
+              );
+
+              // Create a completely new object with updated status
+              return {
+                ...message,
+                status: updatedMessage.status,
+                _timestamp: new Date().getTime(), // Add a unique timestamp to force React to see it as new
+              };
+            }
+            return message;
+          });
+
+          if (!messageFound) {
+            console.warn(
+              `⚠️ Message ${updatedMessage._id} not found in current messages`
+            );
+          }
+
+          console.log(
+            `📊 Updated messages array with ${updatedMessages.length} items`
+          );
+
+          // Force a re-render with completely new array reference
+          return [...updatedMessages];
+        });
+
+        // Force a second update after a small delay to ensure UI refreshes
+        setTimeout(() => {
+          setSelectedChatMessages((current) => {
+            return [...current];
+          });
+        }, 50);
+      };
+
+      // Listen for new messages
+      const handleNewMessage = (message) => {
+        // If this is the current chat and the message is received (not sent by us),
+        // mark it as read immediately
+        if (
+          selectedChatType === "contact" &&
+          selectedChatData &&
+          message.sender &&
+          message.sender._id !== userInfo.id &&
+          (message.sender._id === selectedChatData._id ||
+            (message.recipient &&
+              message.recipient._id === selectedChatData._id))
+        ) {
+          console.log("Marking new message as read:", message._id);
+
+          // With the simplified statuses, just mark as read directly
+          if (message.status === "sent") {
+            // Mark message as read
+            socket.emit("message-read", {
+              messageId: message._id,
+              senderId: message.sender._id,
+            });
+          }
+        }
+      };
+
+      socket.on("message-status-update", handleMessageStatusUpdate);
+      socket.on("receiveMessage", handleNewMessage);
+
+      // Clean up listeners on unmount
+      return () => {
+        socket.off("message-status-update", handleMessageStatusUpdate);
+        socket.off("receiveMessage", handleNewMessage);
+      };
+    }
+  }, [
+    socket,
+    setSelectedChatMessages,
+    selectedChatData,
+    selectedChatType,
+    userInfo.id,
+  ]);
+
+  useEffect(() => {
     const getMessages = async () => {
       const response = await apiClient.post(
         FETCH_ALL_MESSAGES_ROUTE,
@@ -130,6 +253,27 @@ const MessageContainer = () => {
 
       if (response.data.messages) {
         setSelectedChatMessages(response.data.messages);
+
+        // Mark messages as read when conversation is opened
+        if (socket && selectedChatType === "contact") {
+          // With simplified system: only look for messages with sent status
+          const unreadMessages = response.data.messages.filter(
+            (msg) => msg.sender._id !== userInfo.id && msg.status === "sent" // Only check for sent status
+          );
+
+          if (unreadMessages.length > 0) {
+            console.log(
+              `Marking ${unreadMessages.length} messages as read on chat open`
+            );
+            // Mark messages as read
+            unreadMessages.forEach((msg) => {
+              socket.emit("message-read", {
+                messageId: msg._id,
+                senderId: msg.sender._id,
+              });
+            });
+          }
+        }
       }
     };
     const getChannelMessages = async () => {
@@ -145,7 +289,13 @@ const MessageContainer = () => {
       if (selectedChatType === "contact") getMessages();
       else if (selectedChatType === "channel") getChannelMessages();
     }
-  }, [selectedChatData, selectedChatType, setSelectedChatMessages]);
+  }, [
+    selectedChatData,
+    selectedChatType,
+    setSelectedChatMessages,
+    socket,
+    userInfo,
+  ]);
 
   useEffect(() => {
     if (messageEndRef.current) {
@@ -346,9 +496,18 @@ const MessageContainer = () => {
                   isLongContent
                     ? "w-full sm:w-auto max-w-[95%] sm:max-w-[80%] md:max-w-[60%]"
                     : "max-w-[85%] sm:max-w-[70%] md:max-w-[50%]"
-                } break-words whitespace-pre-wrap overflow-visible`}
+                } break-words whitespace-pre-wrap overflow-visible relative`}
               >
                 <div>{message.content}</div>
+                {isCurrentUser && (
+                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
+                    <MessageStatus
+                      status={message.status}
+                      size="small"
+                      className="scale-90 sm:scale-100"
+                    />
+                  </div>
+                )}
               </div>
             )}
             {message.messageType === MESSAGE_TYPES.AUDIO && (
@@ -409,6 +568,15 @@ const MessageContainer = () => {
                     </div>
                   </div>
                 )}
+                {isCurrentUser && (
+                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
+                    <MessageStatus
+                      status={message.status}
+                      size="small"
+                      className="scale-90 sm:scale-100"
+                    />
+                  </div>
+                )}
               </div>
             )}
             {message.messageType === MESSAGE_TYPES.FILE && (
@@ -417,12 +585,12 @@ const MessageContainer = () => {
                   isCurrentUser
                     ? "theme-primary-message"
                     : "theme-secondary-message"
-                } border inline-block p-3 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words`}
+                } border inline-block p-3 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words relative`}
               >
                 <div>
                   {checkIfImage(message.fileUrl) ? (
                     <div
-                      className="cursor-pointer"
+                      className="cursor-pointer relative"
                       onClick={() => {
                         setShowImage(true);
                         setImageURL(message.fileUrl);
@@ -434,6 +602,15 @@ const MessageContainer = () => {
                         className="max-h-64 max-w-full object-cover rounded"
                         onLoad={handleImageLoad}
                       />
+                      {isCurrentUser && (
+                        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/60 px-0.5 py-0.5 sm:px-1.5 sm:py-0.5 rounded-md">
+                          <MessageStatus
+                            status={message.status}
+                            size="small"
+                            className="text-white scale-90 sm:scale-100"
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center justify-between gap-2 w-full">
@@ -455,6 +632,15 @@ const MessageContainer = () => {
                     </div>
                   )}
                 </div>
+                {isCurrentUser && !checkIfImage(message.fileUrl) && (
+                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
+                    <MessageStatus
+                      status={message.status}
+                      size="small"
+                      className="scale-90 sm:scale-100"
+                    />
+                  </div>
+                )}
               </div>
             )}
             {/* Remove the bottom profile display for channel messages */}
@@ -558,9 +744,18 @@ const MessageContainer = () => {
                   isLongContent
                     ? "w-full sm:w-auto max-w-[95%] sm:max-w-[80%] md:max-w-[60%]"
                     : "max-w-[85%] sm:max-w-[70%] md:max-w-[50%]"
-                } break-words whitespace-pre-wrap overflow-visible`}
+                } break-words whitespace-pre-wrap overflow-visible relative`}
               >
                 <div>{message.content}</div>
+                {isCurrentUser && (
+                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
+                    <MessageStatus
+                      status={message.status}
+                      size="small"
+                      className="scale-90 sm:scale-100"
+                    />
+                  </div>
+                )}
               </div>
             )}
             {message.messageType === MESSAGE_TYPES.AUDIO && (
@@ -619,20 +814,27 @@ const MessageContainer = () => {
                     </div>
                   </div>
                 )}
+                {isCurrentUser && (
+                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
+                    <MessageStatus
+                      status={message.status}
+                      size="small"
+                      className="scale-90 sm:scale-100"
+                    />
+                  </div>
+                )}
               </div>
             )}
             {message.messageType === MESSAGE_TYPES.FILE && (
               <div
                 className={`${
-                  isCurrentUser
-                    ? "theme-primary-message"
-                    : "theme-secondary-message"
-                } border inline-block p-3 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words`}
+                  isSender ? "theme-primary-message" : "theme-secondary-message"
+                } border inline-block p-3 rounded my-1 max-w-[85%] sm:max-w-[70%] md:max-w-[50%] break-words relative`}
               >
                 <div>
                   {checkIfImage(message.fileUrl) ? (
                     <div
-                      className="cursor-pointer"
+                      className="cursor-pointer relative"
                       onClick={() => {
                         setShowImage(true);
                         setImageURL(message.fileUrl);
@@ -644,6 +846,15 @@ const MessageContainer = () => {
                         className="max-h-64 max-w-full object-cover rounded"
                         onLoad={handleImageLoad}
                       />
+                      {isCurrentUser && (
+                        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/60 px-0.5 py-0.5 sm:px-1.5 sm:py-0.5 rounded-md">
+                          <MessageStatus
+                            status={message.status}
+                            size="small"
+                            className="text-white scale-90 sm:scale-100"
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center justify-between gap-2 w-full">
@@ -665,6 +876,15 @@ const MessageContainer = () => {
                     </div>
                   )}
                 </div>
+                {isCurrentUser && !checkIfImage(message.fileUrl) && (
+                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
+                    <MessageStatus
+                      status={message.status}
+                      size="small"
+                      className="scale-90 sm:scale-100"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -700,22 +920,38 @@ const MessageContainer = () => {
       <div ref={messageEndRef} />
       {showImage && (
         <div className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col">
-          <div>
+          <div className="relative">
             <img
               src={`${HOST}/${imageURL}`}
               className="h-[80vh] w-full bg-cover"
               alt=""
             />
+            {selectedChatType === "contact" &&
+              selectedChatMessages.some(
+                (msg) => msg.fileUrl === imageURL && msg.sender === userInfo.id
+              ) && (
+                <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 bg-black/60 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md">
+                  <MessageStatus
+                    status={
+                      selectedChatMessages.find(
+                        (msg) => msg.fileUrl === imageURL
+                      )?.status
+                    }
+                    size="large"
+                    className="text-white"
+                  />
+                </div>
+              )}
           </div>
           <div className="flex gap-5 fixed top-0 mt-5">
             <button
-              className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
+              className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300 text-white"
               onClick={() => downloadFile(imageURL)}
             >
               <IoMdArrowRoundDown />
             </button>
             <button
-              className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300"
+              className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300 text-white"
               onClick={() => {
                 setShowImage(false);
                 setImageURL(null);

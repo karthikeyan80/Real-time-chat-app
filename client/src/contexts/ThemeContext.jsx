@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const ThemeContext = createContext({
   theme: "default",
   setTheme: () => {},
-  themes: ["default", "dark", "cyberpunk", "forest", "ocean", "sunset"],
+  themes: ["default", "dark", "cyan", "green", "blue", "sunset"],
 });
 
 export const useTheme = () => useContext(ThemeContext);
@@ -16,20 +16,13 @@ export const ThemeProvider = ({ children }) => {
 
   // Preload all theme background images to ensure smooth transitions
   useEffect(() => {
-    const themes = [
-      "default",
-      "dark",
-      "cyberpunk",
-      "forest",
-      "ocean",
-      "sunset",
-    ];
+    const themes = ["default", "dark", "cyan", "green", "blue", "sunset"];
     const imageMap = {
       default: "/purple.jpg",
       dark: "/dark.jpg",
-      cyberpunk: "/cyberpunk.jpg",
-      forest: "/forest.jpg",
-      ocean: "/ocean.jpg",
+      cyan: "/cyberpunk.jpg",
+      green: "/forest.jpg",
+      blue: "/ocean.jpg",
       sunset: "/sunset.jpg",
     };
 
@@ -75,7 +68,7 @@ export const ThemeProvider = ({ children }) => {
         backgroundSecondary: "#1e293b", // slate-800
         text: "#ffffff", // slate-50
       },
-      cyberpunk: {
+      cyan: {
         primary: "#06b6d4", // cyan-500
         primaryLight: "#22d3ee", // cyan-400
         primaryDark: "#0891b2", // cyan-600
@@ -84,7 +77,7 @@ export const ThemeProvider = ({ children }) => {
         backgroundSecondary: "#164e63", // cyan-800
         text: "#e0f2fe", // cyan-50
       },
-      forest: {
+      green: {
         primary: "#16a34a", // green-600
         primaryLight: "#22c55e", // green-500
         primaryDark: "#15803d", // green-700
@@ -93,7 +86,7 @@ export const ThemeProvider = ({ children }) => {
         backgroundSecondary: "#064e3b", // green-800
         text: "#f0fdf4", // green-50
       },
-      ocean: {
+      blue: {
         primary: "#2563eb", // blue-600
         primaryLight: "#3b82f6", // blue-500
         primaryDark: "#1d4ed8", // blue-700
@@ -136,9 +129,9 @@ export const ThemeProvider = ({ children }) => {
     const themeClasses = [
       "theme-default",
       "theme-dark",
-      "theme-cyberpunk",
-      "theme-forest",
-      "theme-ocean",
+      "theme-cyan",
+      "theme-green",
+      "theme-blue",
       "theme-sunset",
     ];
     themeClasses.forEach((className) => {
@@ -147,7 +140,7 @@ export const ThemeProvider = ({ children }) => {
     document.documentElement.classList.add(`theme-${theme}`);
   }, [theme]);
 
-  const themes = ["default", "dark", "cyberpunk", "forest", "ocean", "sunset"];
+  const themes = ["default", "dark", "cyan", "green", "blue", "sunset"];
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, themes }}>

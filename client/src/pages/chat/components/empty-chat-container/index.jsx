@@ -29,10 +29,10 @@ const EmptyChatContainer = () => {
         <LottieAnimation />
         <div className="text-opacity-80 text-white flex flex-col gap-5 items-center mt-10 lg:text-4xl text-3xl transition-all duration-1000 text-center">
           <h3 className="poppins-medium">
-            Hi
-            <span className="text-purple-500">!</span> Welcome to
-            <span className="text-purple-500"> Chatify </span>
-            App<span className="text-purple-500">.</span>
+            
+           <i><span className="text-white-500">HI ! </span> Welcome to
+            <span className="text-white-500"> Chatify </span>
+            App<span className="text-white-500">.</span></i>
           </h3>
         </div>
       </div>

@@ -72,9 +72,92 @@ export const SocketProvider = ({ children }) => {
             (currentChatData._id === message.sender._id ||
               currentChatData._id === message.recipient._id)
           ) {
+            // If this is a message we received while in that chat, mark it as read
+            if (message.sender._id !== userInfo.id && socket.current) {
+              socket.current.emit("message-read", {
+                messageId: message._id,
+                senderId: message.sender._id,
+              });
+            }
+
             addMessage(message);
           }
           addContactInDMContacts(message);
+        };
+
+        const handleMessageStatusUpdate = (updatedMessage) => {
+          // Get the most current store state
+          const {
+            updateMessageStatus,
+            selectedChatMessages,
+            userInfo,
+            selectedChatData,
+            setSelectedChatMessages,
+          } = useAppStore.getState();
+
+          console.log(
+            "🔄 Socket: Received message status update:",
+            updatedMessage
+          );
+
+          // Make sure we have a valid updated message
+          if (
+            !updatedMessage ||
+            !updatedMessage._id ||
+            !updatedMessage.status
+          ) {
+            console.error(
+              "❌ Invalid message status update received:",
+              updatedMessage
+            );
+            return;
+          }
+
+          // Check if this update is for the current user's message
+          const isUserMessage =
+            updatedMessage.sender && updatedMessage.sender._id === userInfo?.id;
+
+          if (isUserMessage) {
+            console.log(
+              `✅ Message ${updatedMessage._id} status changed to ${updatedMessage.status} - This is your message`
+            );
+          }
+
+          // Force a direct update to the selectedChatMessages array for immediate UI refresh
+          if (Array.isArray(selectedChatMessages)) {
+            console.log(
+              `🔍 Looking for message ${updatedMessage._id} in ${selectedChatMessages.length} messages`
+            );
+
+            // Create a new array with the updated message
+            const directlyUpdatedMessages = selectedChatMessages.map(
+              (message) => {
+                if (message._id === updatedMessage._id) {
+                  console.log(
+                    `📝 Directly updating message status from ${message.status} to ${updatedMessage.status}`
+                  );
+                  return {
+                    ...message,
+                    status: updatedMessage.status,
+                  };
+                }
+                return message;
+              }
+            );
+
+            // Force a state update for immediate UI refresh
+            setSelectedChatMessages([...directlyUpdatedMessages]);
+          }
+
+          // Also use the store's update function for consistency
+          if (updateMessageStatus) {
+            console.log(
+              `🔄 Store: Updating message ${updatedMessage._id} status to ${updatedMessage.status}`
+            );
+            updateMessageStatus(updatedMessage._id, updatedMessage.status);
+          } else {
+            console.error("❌ updateMessageStatus function not found in store");
+          }
         };
 
         const handleReceiveChannelMessage = (message) => {
@@ -172,6 +255,7 @@ export const SocketProvider = ({ children }) => {
         socket.current.off("channel-created");
         socket.current.off("chat-deleted");
         socket.current.off("channel-disbanded");
+        socket.current.off("message-status-update");
 
         // Add new event listeners
         socket.current.on("receiveMessage", handleReceiveMessage);
@@ -181,6 +265,7 @@ export const SocketProvider = ({ children }) => {
         );
         socket.current.on("new-channel-added", addNewChannel);
         socket.current.on("chat-deleted", handleChatDeleted);
+        socket.current.on("message-status-update", handleMessageStatusUpdate);
 
         socket.current.on(
           "channel-disbanded",
@@ -224,6 +309,7 @@ export const SocketProvider = ({ children }) => {
             socket.current.off("channel-created");
             socket.current.off("chat-deleted");
             socket.current.off("channel-disbanded");
+            socket.current.off("message-status-update");
           }
         };
       } catch (error) {
