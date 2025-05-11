@@ -459,12 +459,8 @@ const MessageContainer = () => {
               >
                 <div>{message.content}</div>
                 {isCurrentUser && (
-                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                    <MessageStatus
-                      status={message.status}
-                      size="small"
-                      className="scale-90 sm:scale-100"
-                    />
+                  <div className="message-receipt-container">
+                    <MessageStatus status={message.status} size="small" />
                   </div>
                 )}
               </div>
@@ -528,12 +524,8 @@ const MessageContainer = () => {
                   </div>
                 )}
                 {isCurrentUser && (
-                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                    <MessageStatus
-                      status={message.status}
-                      size="small"
-                      className="scale-90 sm:scale-100"
-                    />
+                  <div className="message-receipt-container">
+                    <MessageStatus status={message.status} size="small" />
                   </div>
                 )}
               </div>
@@ -562,11 +554,11 @@ const MessageContainer = () => {
                         onLoad={handleImageLoad}
                       />
                       {isCurrentUser && (
-                        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/60 px-0.5 py-0.5 sm:px-1.5 sm:py-0.5 rounded-md">
+                        <div className="message-receipt-container-image">
                           <MessageStatus
                             status={message.status}
                             size="small"
-                            className="text-white scale-90 sm:scale-100"
+                            className="text-white"
                           />
                         </div>
                       )}
@@ -592,12 +584,8 @@ const MessageContainer = () => {
                   )}
                 </div>
                 {isCurrentUser && !checkIfImage(message.fileUrl) && (
-                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                    <MessageStatus
-                      status={message.status}
-                      size="small"
-                      className="scale-90 sm:scale-100"
-                    />
+                  <div className="message-receipt-container">
+                    <MessageStatus status={message.status} size="small" />
                   </div>
                 )}
               </div>
@@ -707,12 +695,8 @@ const MessageContainer = () => {
               >
                 <div>{message.content}</div>
                 {isCurrentUser && (
-                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                    <MessageStatus
-                      status={message.status}
-                      size="small"
-                      className="scale-90 sm:scale-100"
-                    />
+                  <div className="message-receipt-container">
+                    <MessageStatus status={message.status} size="small" />
                   </div>
                 )}
               </div>
@@ -774,12 +758,8 @@ const MessageContainer = () => {
                   </div>
                 )}
                 {isCurrentUser && (
-                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                    <MessageStatus
-                      status={message.status}
-                      size="small"
-                      className="scale-90 sm:scale-100"
-                    />
+                  <div className="message-receipt-container">
+                    <MessageStatus status={message.status} size="small" />
                   </div>
                 )}
               </div>
@@ -806,11 +786,11 @@ const MessageContainer = () => {
                         onLoad={handleImageLoad}
                       />
                       {isCurrentUser && (
-                        <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/60 px-0.5 py-0.5 sm:px-1.5 sm:py-0.5 rounded-md">
+                        <div className="message-receipt-container-image">
                           <MessageStatus
                             status={message.status}
                             size="small"
-                            className="text-white scale-90 sm:scale-100"
+                            className="text-white"
                           />
                         </div>
                       )}
@@ -836,12 +816,8 @@ const MessageContainer = () => {
                   )}
                 </div>
                 {isCurrentUser && !checkIfImage(message.fileUrl) && (
-                  <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2">
-                    <MessageStatus
-                      status={message.status}
-                      size="small"
-                      className="scale-90 sm:scale-100"
-                    />
+                  <div className="message-receipt-container">
+                    <MessageStatus status={message.status} size="small" />
                   </div>
                 )}
               </div>
@@ -889,7 +865,7 @@ const MessageContainer = () => {
               selectedChatMessages.some(
                 (msg) => msg.fileUrl === imageURL && msg.sender === userInfo.id
               ) && (
-                <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 bg-black/60 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md">
+                <div className="expanded-image-receipt-container">
                   <MessageStatus
                     status={
                       selectedChatMessages.find(

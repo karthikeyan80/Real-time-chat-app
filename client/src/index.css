@@ -1202,3 +1202,115 @@ html[data-theme]:not([data-theme="default"])
   background-color: #f3e8ff !important;
   color: #8417ff !important;
 }
+
+/* Override Dialog backgrounds to ensure they don't inherit theme background images */
+[role="dialog"] > div > div,
+[role="dialog"] [class*="DialogContent"],
+[class*="DialogContent"] {
+  background-image: none !important;
+  background: #181920 !important;
+  background-color: #181920 !important;
+}
+
+/* Message receipt styling for consistency across all message types */
+.message-receipt-container {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+}
+
+@media (min-width: 640px) {
+  .message-receipt-container {
+    bottom: 2px;
+    right: 2px;
+  }
+}
+
+.message-receipt-container .message-status {
+  transform: scale(0.9);
+}
+
+@media (min-width: 640px) {
+  .message-receipt-container .message-status {
+    transform: scale(1);
+  }
+}
+
+/* Image messages need a special container with background */
+.message-receipt-container-image {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 0.125rem 0.125rem;
+  border-radius: 0.375rem;
+}
+
+@media (min-width: 640px) {
+  .message-receipt-container-image {
+    bottom: 2px;
+    right: 2px;
+    padding: 0.125rem 0.375rem;
+  }
+}
+
+.message-receipt-container-image .message-status {
+  transform: scale(0.9);
+  color: white;
+}
+
+@media (min-width: 640px) {
+  .message-receipt-container-image .message-status {
+    transform: scale(1);
+  }
+}
+
+/* Special container for expanded image view */
+.expanded-image-receipt-container {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 0.125rem 0.125rem;
+  border-radius: 0.375rem;
+}
+
+@media (min-width: 640px) {
+  .expanded-image-receipt-container {
+    bottom: 6px;
+    right: 6px;
+    padding: 0.125rem 0.375rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .expanded-image-receipt-container {
+    bottom: 8px;
+    right: 8px;
+    padding: 0.125rem 0.375rem;
+  }
+}
+
+.expanded-image-receipt-container .message-status {
+  transform: scale(1);
+  color: white;
+}
+
+@media (min-width: 640px) {
+  .expanded-image-receipt-container .message-status {
+    transform: scale(1.2);
+  }
+}
+
+@media (min-width: 768px) {
+  .expanded-image-receipt-container .message-status {
+    transform: scale(1.5);
+  }
+}
+
+/* Message Bar Input Styles - Ensure text is visible in all themes */
+.message-bar input[type="text"],
+.message-bar input[placeholder="Type a message..."] {
+  color: var(--base-content) !important;
+  background-color: transparent !important;
+}

@@ -213,7 +213,11 @@ const AddMembersToChannel = ({ channel, onClose }) => {
       </DialogDescription>
       <DialogContent
         className="bg-[#181920] border-none text-white w-[400px] h-[500px] flex flex-col"
-        style={{ backgroundImage: "none" }}
+        style={{
+          backgroundImage: "none !important",
+          backgroundColor: "#181920 !important",
+          background: "#181920 !important",
+        }}
       >
         <DialogHeader>
           <DialogTitle>Add Members to {channel.name}</DialogTitle>
