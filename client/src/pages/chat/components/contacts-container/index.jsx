@@ -87,11 +87,11 @@ const ContactsContainer = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-5 px-5">
               <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center mb-3">
-                  <span className="text-purple-400 text-xl font-bold">!</span>
+                <div className="w-10 h-10 rounded-full bg-[#2c2e3b] flex items-center justify-center mb-3">
+                  <span className="text-white/100 text-xl font-bold">!</span>
                 </div>
-                <div className="text-purple-400 font-medium text-center mb-2">No Contacts</div>
-                <p className="text-neutral-300 text-xs text-center">
+                <div className="text-white/100 font-medium text-center mb-2">No Contacts</div>
+                <p className="text-neutral-400 text-xs text-center">
                   Click the + button to start a new conversation
                 </p>
               </div>
@@ -117,10 +117,10 @@ const ContactsContainer = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-5 px-5">
               <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-purple-900/50 flex items-center justify-center mb-3">
-                  <span className="text-purple-400 text-xl font-bold">!</span>
+                <div className="w-10 h-10 rounded-full bg-[#2c2e3b] flex items-center justify-center mb-3">
+                  <span className="text-white/100 text-xl font-bold">!</span>
                 </div>
-                <div className="text-purple-400 font-medium text-center mb-2">No Channels</div>
+                <div className="text-white/100 font-medium text-center mb-2">No Channels</div>
                 <p className="text-neutral-300 text-xs text-center">
                   Click the + button to create a new channel
                 </p>

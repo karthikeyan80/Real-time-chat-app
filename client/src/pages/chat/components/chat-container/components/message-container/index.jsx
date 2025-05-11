@@ -166,11 +166,11 @@ const MessageContainer = () => {
                 `🔄 UI Update: Message ${message._id} status changing from ${message.status} to ${updatedMessage.status}`
               );
 
-              // Create a completely new object with updated status
+              // Create a completely new object with updated status and timestamp
               return {
                 ...message,
                 status: updatedMessage.status,
-                _timestamp: new Date().getTime(), // Add a unique timestamp to force React to see it as new
+                _timestamp: Date.now(), // Add timestamp to force re-render
               };
             }
             return message;
@@ -189,57 +189,16 @@ const MessageContainer = () => {
           // Force a re-render with completely new array reference
           return [...updatedMessages];
         });
-
-        // Force a second update after a small delay to ensure UI refreshes
-        setTimeout(() => {
-          setSelectedChatMessages((current) => {
-            return [...current];
-          });
-        }, 50);
-      };
-
-      // Listen for new messages
-      const handleNewMessage = (message) => {
-        // If this is the current chat and the message is received (not sent by us),
-        // mark it as read immediately
-        if (
-          selectedChatType === "contact" &&
-          selectedChatData &&
-          message.sender &&
-          message.sender._id !== userInfo.id &&
-          (message.sender._id === selectedChatData._id ||
-            (message.recipient &&
-              message.recipient._id === selectedChatData._id))
-        ) {
-          console.log("Marking new message as read:", message._id);
-
-          // With the simplified statuses, just mark as read directly
-          if (message.status === "sent") {
-            // Mark message as read
-            socket.emit("message-read", {
-              messageId: message._id,
-              senderId: message.sender._id,
-            });
-          }
-        }
       };
 
       socket.on("message-status-update", handleMessageStatusUpdate);
-      socket.on("receiveMessage", handleNewMessage);
 
       // Clean up listeners on unmount
       return () => {
         socket.off("message-status-update", handleMessageStatusUpdate);
-        socket.off("receiveMessage", handleNewMessage);
       };
     }
-  }, [
-    socket,
-    setSelectedChatMessages,
-    selectedChatData,
-    selectedChatType,
-    userInfo.id,
-  ]);
+  }, [socket, setSelectedChatMessages, userInfo.id]);
 
   useEffect(() => {
     const getMessages = async () => {

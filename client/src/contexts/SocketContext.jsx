@@ -139,6 +139,7 @@ export const SocketProvider = ({ children }) => {
                   return {
                     ...message,
                     status: updatedMessage.status,
+                    _timestamp: updatedMessage._timestamp || Date.now(), // Use server timestamp or fallback to client
                   };
                 }
                 return message;
@@ -267,42 +268,22 @@ export const SocketProvider = ({ children }) => {
         socket.current.on("chat-deleted", handleChatDeleted);
         socket.current.on("message-status-update", handleMessageStatusUpdate);
 
-        socket.current.on(
-          "channel-disbanded",
-          ({ channelId, disbandedBy, isAdmin, channelName }) => {
-            // Use the store's removeChannel function which is now safer
-            const { removeChannel } = useAppStore.getState();
-            console.log(
-              "Disbanding channel received: ",
-              channelId,
-              channelName
-            );
-
-            // Use the safer method to remove the channel
-            removeChannel(channelId);
-
-            // If the user was viewing the disbanded channel, close the chat
-            if (selectedChatData?._id === channelId) {
-              setSelectedChatData(undefined);
-              setSelectedChatType(undefined);
-              setSelectedChatMessages([]);
-            }
-
-            // Show different notifications based on whether the user is the admin
-            if (isAdmin) {
-              toast.success(
-                `Channel "${channelName}" has been disbanded successfully`
-              );
-            } else {
-              toast.info(
-                `The channel "${channelName}" has been disbanded by the admin`
-              );
-            }
-          }
-        );
+        // Join chat room when selectedChatData changes
+        if (selectedChatData && selectedChatType === "contact") {
+          const chatId = `${userInfo.id}-${selectedChatData._id}`;
+          socket.current.emit("join-chat", { chatId });
+          console.log(`Joined chat room: ${chatId}`);
+        }
 
         return () => {
           if (socket.current) {
+            // Leave chat room when component unmounts or chat changes
+            if (selectedChatData && selectedChatType === "contact") {
+              const chatId = `${userInfo.id}-${selectedChatData._id}`;
+              socket.current.emit("leave-chat", { chatId });
+              console.log(`Left chat room: ${chatId}`);
+            }
+
             socket.current.off("receiveMessage");
             socket.current.off("recieve-channel-message");
             socket.current.off("new-channel-added");

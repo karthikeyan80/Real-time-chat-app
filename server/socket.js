@@ -1,6 +1,7 @@
 import { Server as SocketIOServer } from "socket.io";
 import Message from "./model/MessagesModel.js";
 import Channel from "./model/ChannelModel.js";
+import mongoose from "mongoose";
 
 const setupSocket = (server) => {
   const io = new SocketIOServer(server, {
@@ -14,9 +15,59 @@ const setupSocket = (server) => {
   const userSocketMap = new Map();
   const typingTimeouts = new Map(); // Store timeouts for each user
   const channelTypingTimeouts = new Map(); // Store timeouts for each user in each channel
+  const unreadMessageCounts = new Map(); // Store unread message counts for each user
 
   // Make userSocketMap accessible through the io instance
   io.userSocketMap = userSocketMap;
+
+  // Helper function to validate and convert to ObjectId
+  const toObjectId = (id) => {
+    try {
+      if (!id || typeof id !== "string") return null;
+      return new mongoose.Types.ObjectId(id);
+    } catch (error) {
+      console.error(`Invalid ObjectId format for id: ${id}`);
+      return null;
+    }
+  };
+
+  // Function to update unread message counts
+  const updateUnreadCount = async (userId, chatId, increment = true) => {
+    try {
+      const key = `${userId}-${chatId}`;
+      const currentCount = unreadMessageCounts.get(key) || 0;
+      const newCount = increment ? currentCount + 1 : 0;
+      unreadMessageCounts.set(key, newCount);
+
+      // Get the user's socket ID
+      const socketId = userSocketMap.get(userId);
+      if (socketId) {
+        io.to(socketId).emit("unread-count-update", {
+          chatId,
+          count: newCount,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating unread count:", error);
+    }
+  };
+
+  // Function to get all unread counts for a user
+  const getUnreadCounts = async (userId) => {
+    try {
+      const counts = {};
+      for (const [key, count] of unreadMessageCounts.entries()) {
+        const [storedUserId, chatId] = key.split("-");
+        if (storedUserId === userId && count > 0) {
+          counts[chatId] = count;
+        }
+      }
+      return counts;
+    } catch (error) {
+      console.error("Error getting unread counts:", error);
+      return {};
+    }
+  };
 
   const addChannelNotify = async (channel) => {
     if (channel && channel.members) {
@@ -54,6 +105,8 @@ const setupSocket = (server) => {
     // Send message to recipient if online (but keep status as sent)
     if (recipientSocketId) {
       io.to(recipientSocketId).emit("receiveMessage", messageData);
+      // Update unread count for recipient
+      await updateUnreadCount(message.recipient, message.sender);
     }
 
     // Always send to sender with sent status
@@ -143,12 +196,84 @@ const setupSocket = (server) => {
     }
   };
 
+  // Function to mark all messages as read when chat is opened
+  const markMessagesAsRead = async (userId, chatId) => {
+    try {
+      // Convert string IDs to ObjectId with validation
+      const recipientId = toObjectId(userId);
+      const senderId = toObjectId(chatId);
+
+      // Skip if either ID is invalid
+      if (!recipientId || !senderId) {
+        console.error("Invalid user ID or chat ID format");
+        return;
+      }
+
+      // Find all unread messages where the current user is the recipient
+      const unreadMessages = await Message.find({
+        sender: senderId,
+        recipient: recipientId,
+        status: { $ne: "read" },
+      });
+
+      if (unreadMessages.length > 0) {
+        // Update all messages to read status
+        await Message.updateMany(
+          { _id: { $in: unreadMessages.map((msg) => msg._id) } },
+          { status: "read" }
+        );
+
+        // Get the updated messages with populated sender and recipient
+        const updatedMessages = await Message.find({
+          _id: { $in: unreadMessages.map((msg) => msg._id) },
+        })
+          .populate("sender", "id email firstName lastName image color")
+          .populate("recipient", "id email firstName lastName image color");
+
+        // Notify both users about the read status
+        const senderSocketId = userSocketMap.get(chatId);
+        const recipientSocketId = userSocketMap.get(userId);
+
+        // Create a unique timestamp for this update
+        const updateTimestamp = Date.now();
+
+        // Send updates to both users
+        updatedMessages.forEach((message) => {
+          const messageUpdate = {
+            ...message.toObject(),
+            _timestamp: updateTimestamp,
+          };
+
+          if (senderSocketId) {
+            io.to(senderSocketId).emit("message-status-update", messageUpdate);
+          }
+          if (recipientSocketId) {
+            io.to(recipientSocketId).emit(
+              "message-status-update",
+              messageUpdate
+            );
+          }
+        });
+
+        // Clear unread count only for the recipient
+        await updateUnreadCount(userId, chatId, false);
+      }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
   io.on("connection", (socket) => {
     const userId = socket.handshake.query.userId;
 
     if (userId) {
       userSocketMap.set(userId, socket.id);
       console.log(`User connected: ${userId} with socket ID: ${socket.id}`);
+
+      // Send initial unread counts when user connects
+      getUnreadCounts(userId).then((counts) => {
+        socket.emit("initial-unread-counts", counts);
+      });
     } else {
       console.log("User ID not provided during connection.");
     }
@@ -300,29 +425,28 @@ const setupSocket = (server) => {
           `💌 Message exchange between sender ${senderId} and recipient ${currentUserId}`
         );
 
-        // 1. Notify the sender (the one who sent the original message)
+        // Create a unique timestamp for this update
+        const updateTimestamp = Date.now();
+
+        // Prepare the updated message object with timestamp
+        const messageUpdate = {
+          ...updatedMessage.toObject(),
+          _timestamp: updateTimestamp,
+        };
+
+        // First, notify the sender immediately if they're online
         if (senderSocketId) {
-          console.log(
-            `🔔 Notifying sender ${senderId} via socket ${senderSocketId} about read status`
-          );
-          io.to(senderSocketId).emit("message-status-update", updatedMessage);
-        } else {
-          console.log(
-            `🔕 Sender ${senderId} is offline, status will update when they reconnect`
-          );
+          console.log(`🔔 Notifying sender ${senderId} about read status`);
+          io.to(senderSocketId).emit("message-status-update", messageUpdate);
         }
 
-        // 2. Also notify the current user (receiver/reader of the message)
+        // Then notify the recipient
         console.log(
-          `🔔 Notifying recipient ${currentUserId} via socket ${currentUserSocketId}`
+          `🔔 Notifying recipient ${currentUserId} about read status`
         );
-        io.to(currentUserSocketId).emit(
-          "message-status-update",
-          updatedMessage
-        );
+        io.to(currentUserSocketId).emit("message-status-update", messageUpdate);
 
-        // 3. Broadcast to all other possible tabs/windows of these users
-        // Loop through all connected sockets to find other instances of these users
+        // Broadcast to all other possible tabs/windows of these users
         for (const [userId, socketId] of userSocketMap.entries()) {
           if (
             (userId === senderId || userId === currentUserId) && // Is one of our users
@@ -332,13 +456,64 @@ const setupSocket = (server) => {
             console.log(
               `🔄 Syncing read status to additional socket ${socketId} for user ${userId}`
             );
-            io.to(socketId).emit("message-status-update", updatedMessage);
+            io.to(socketId).emit("message-status-update", messageUpdate);
           }
         }
+
+        // Also emit to any sockets that might be in the chat room
+        const chatRoom = `chat-${existingMessage.sender._id}-${existingMessage.recipient._id}`;
+        io.to(chatRoom).emit("message-status-update", messageUpdate);
+
+        // Reset unread count for the recipient
+        await updateUnreadCount(
+          updatedMessage.recipient._id,
+          updatedMessage.sender._id,
+          false
+        );
       } catch (error) {
         console.error("❌ Error updating message read status:", error);
         console.error(error); // Log the full error
       }
+    });
+
+    // Add this handler to join chat rooms when users open a chat
+    socket.on("join-chat", async ({ chatId }) => {
+      try {
+        socket.join(`chat-${chatId}`);
+        console.log(`User ${socket.id} joined chat room: chat-${chatId}`);
+
+        // Mark messages as read only if the current user is the recipient
+        if (userId) {
+          // Convert string IDs to ObjectId with validation
+          const recipientId = toObjectId(userId);
+          const senderId = toObjectId(chatId);
+
+          // Skip if either ID is invalid
+          if (!recipientId || !senderId) {
+            console.error("Invalid user ID or chat ID format");
+            return;
+          }
+
+          // Check if there are any unread messages where this user is the recipient
+          const hasUnreadMessages = await Message.exists({
+            sender: senderId,
+            recipient: recipientId,
+            status: { $ne: "read" },
+          });
+
+          if (hasUnreadMessages) {
+            await markMessagesAsRead(userId, chatId);
+          }
+        }
+      } catch (error) {
+        console.error("Error in join-chat handler:", error);
+      }
+    });
+
+    // Add this handler to leave chat rooms when users close a chat
+    socket.on("leave-chat", ({ chatId }) => {
+      socket.leave(`chat-${chatId}`);
+      console.log(`User ${socket.id} left chat room: chat-${chatId}`);
     });
 
     socket.on("chat-deleted", async (data) => {
@@ -381,6 +556,14 @@ const setupSocket = (server) => {
           isAdmin,
           channelName,
         });
+      }
+    });
+
+    // Add handler for getting unread counts
+    socket.on("get-unread-counts", async () => {
+      if (userId) {
+        const counts = await getUnreadCounts(userId);
+        socket.emit("initial-unread-counts", counts);
       }
     });
 

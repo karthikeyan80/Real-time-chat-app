@@ -6,7 +6,7 @@ import { RxExit } from "react-icons/rx";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import { IoTrashBin } from "react-icons/io5";
 import { HiOutlineInformationCircle } from "react-icons/hi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import apiClient from "@/lib/api-client";
 import { LEAVE_CHANNEL, DELETE_CHAT, DISBAND_CHANNEL } from "@/lib/constants";
 import { toast } from "sonner";
@@ -31,6 +31,117 @@ const ContactList = ({ contacts, isChannel = false }) => {
   const [hoveredContact, setHoveredContact] = useState(null);
   const { theme } = useTheme();
 
+  // Add state to track unread messages
+  const [unreadMessages, setUnreadMessages] = useState({});
+
+  // Update unread messages when receiving new messages
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (message) => {
+      console.log("New message received:", message);
+      if (isChannel) {
+        // For channels, track messages from other members
+        if (message.sender._id !== userInfo.id) {
+          setUnreadMessages((prev) => {
+            const currentCount = prev[message.channelId] || 0;
+            console.log(
+              `Updating channel ${message.channelId} unread count: ${
+                currentCount + 1
+              }`
+            );
+            return {
+              ...prev,
+              [message.channelId]: currentCount + 1,
+            };
+          });
+        }
+      } else {
+        // For DM chats, track messages from other users
+        if (message.sender._id !== userInfo.id) {
+          setUnreadMessages((prev) => {
+            const currentCount = prev[message.sender._id] || 0;
+            console.log(
+              `Updating DM ${message.sender._id} unread count: ${
+                currentCount + 1
+              }`
+            );
+            return {
+              ...prev,
+              [message.sender._id]: currentCount + 1,
+            };
+          });
+        }
+      }
+    };
+
+    const handleMessageRead = (updatedMessage) => {
+      console.log("Message read update:", updatedMessage);
+      if (isChannel) {
+        // For channels, clear unread count when opening the channel
+        if (
+          selectedChatData &&
+          selectedChatData._id === updatedMessage.channelId
+        ) {
+          setUnreadMessages((prev) => {
+            console.log(
+              `Clearing channel ${updatedMessage.channelId} unread count`
+            );
+            return {
+              ...prev,
+              [updatedMessage.channelId]: 0,
+            };
+          });
+        }
+      } else {
+        // For DM chats, clear unread count when messages are read
+        if (updatedMessage.sender._id === userInfo.id) {
+          setUnreadMessages((prev) => {
+            console.log(
+              `Clearing DM ${updatedMessage.recipient._id} unread count`
+            );
+            return {
+              ...prev,
+              [updatedMessage.recipient._id]: 0,
+            };
+          });
+        }
+      }
+    };
+
+    // Handle unread count updates from server
+    const handleUnreadCountUpdate = ({ chatId, count }) => {
+      console.log(`Unread count update for ${chatId}: ${count}`);
+      setUnreadMessages((prev) => ({
+        ...prev,
+        [chatId]: count,
+      }));
+    };
+
+    // Handle initial unread counts
+    const handleInitialUnreadCounts = (counts) => {
+      console.log("Initial unread counts:", counts);
+      setUnreadMessages(counts);
+    };
+
+    socket.on("receiveMessage", handleNewMessage);
+    socket.on("recieve-channel-message", handleNewMessage);
+    socket.on("message-status-update", handleMessageRead);
+    socket.on("unread-count-update", handleUnreadCountUpdate);
+    socket.on("initial-unread-counts", handleInitialUnreadCounts);
+
+    // Request initial unread counts
+    socket.emit("get-unread-counts");
+
+    return () => {
+      socket.off("receiveMessage", handleNewMessage);
+      socket.off("recieve-channel-message", handleNewMessage);
+      socket.off("message-status-update", handleMessageRead);
+      socket.off("unread-count-update", handleUnreadCountUpdate);
+      socket.off("initial-unread-counts", handleInitialUnreadCounts);
+    };
+  }, [socket, isChannel, userInfo.id, selectedChatData]);
+
   const handleClick = (contact) => {
     if (isChannel) setSelectedChatType("channel");
     else setSelectedChatType("contact");
@@ -38,6 +149,20 @@ const ContactList = ({ contacts, isChannel = false }) => {
     if (selectedChatData && selectedChatData._id !== contact._id) {
       setSelectedChatMessages([]);
     }
+
+    // Join the chat room and mark messages as read
+    if (socket) {
+      socket.emit("join-chat", { chatId: contact._id });
+    }
+
+    // Clear unread count when chat/channel is opened
+    setUnreadMessages((prev) => {
+      console.log(`Clearing unread count for ${contact._id}`);
+      return {
+        ...prev,
+        [contact._id]: 0,
+      };
+    });
   };
 
   const handleLeaveChannel = async (e, channel) => {
@@ -241,12 +366,20 @@ const ContactList = ({ contacts, isChannel = false }) => {
                   </Avatar>
                 )}
 
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
-                    {isChannel
-                      ? contact.name
-                      : `${contact.firstName} ${contact.lastName}`}
-                  </span>
+                <div className="flex flex-col flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {isChannel
+                        ? contact.name
+                        : `${contact.firstName} ${contact.lastName}`}
+                    </span>
+                    {/* Add unread message notification for both DM and channels */}
+                    {unreadMessages[contact._id] > 0 && (
+                      <div className="bg-green-600 text-white text-xs font-medium px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center animate-fade-in">
+                        {unreadMessages[contact._id]}
+                      </div>
+                    )}
+                  </div>
                   {isChannel && (
                     <span className="text-xs text-white">
                       {contact.members?.length || 0} members
@@ -296,8 +429,8 @@ const ContactList = ({ contacts, isChannel = false }) => {
         })
       ) : (
         <div className="flex flex-col items-center justify-center py-8 px-4 my-4 mx-2 rounded-lg bg-[#2c2e3b]/30 text-neutral-300">
-          <HiOutlineInformationCircle className="text-3xl mb-2 text-purple-500" />
-          <p className="text-sm font-medium">
+          <HiOutlineInformationCircle className="text-3xl mb-2 text-white/50" />
+          <p className="text-sm text-neutral-400 font-medium">
             No {isChannel ? "channels" : "contacts"} available
           </p>
           <p className="text-xs text-neutral-400 mt-1 text-center">
