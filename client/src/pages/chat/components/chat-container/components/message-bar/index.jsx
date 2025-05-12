@@ -14,6 +14,7 @@ import { FaPaperPlane } from "react-icons/fa";
 const MessageBar = () => {
   const emojiRef = useRef();
   const fileInputRef = useRef();
+  const inputRef = useRef();
   const {
     selectedChatData,
     userInfo,
@@ -60,6 +61,16 @@ const MessageBar = () => {
       .replace(/[^\p{L}\p{N}\s.,!?]/gu, "")
       .trim();
   };
+
+  // Auto-focus the input field when chat is opened or changed
+  useEffect(() => {
+    if (selectedChatData && inputRef.current) {
+      // Short timeout to ensure the DOM is fully rendered
+      setTimeout(() => {
+        inputRef.current.focus();
+      }, 100);
+    }
+  }, [selectedChatData]);
 
   // Fetch available voices on component mount
   useEffect(() => {
@@ -303,6 +314,7 @@ const MessageBar = () => {
     <div className="message-bar flex items-center gap-1 sm:gap-2 p-1 sm:p-2 px-2 sm:px-4 md:px-8">
       <div className="flex-1 flex bg-[#2a2b33]/90 backdrop-blur-sm rounded-md items-center gap-1 sm:gap-2 pr-1 sm:pr-2 min-w-0">
         <input
+          ref={inputRef}
           value={message}
           onChange={handleMessageChange}
           onKeyDown={handleKeyDown}
@@ -334,11 +346,11 @@ const MessageBar = () => {
               ref={emojiRef}
               style={{
                 zIndex: 1000,
-                backgroundColor: '#1f1f1f',
-                borderRadius: '8px',
-                boxShadow: '0 0 10px rgba(0,0,0,0.5)',
-                overflow: 'hidden',
-                maxWidth: '90vw'
+                backgroundColor: "#1f1f1f",
+                borderRadius: "8px",
+                boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                overflow: "hidden",
+                maxWidth: "90vw",
               }}
             >
               <EmojiPicker
@@ -354,7 +366,7 @@ const MessageBar = () => {
           )}
         </div>
       </div>
-      
+
       <select
         className="bg-gray-800 text-white p-1 sm:p-1.5 rounded-md text-xs sm:text-sm w-16 sm:w-24 md:w-32 lg:w-40 flex-shrink-0 overflow-hidden text-ellipsis"
         value={selectedVoice}
@@ -368,14 +380,18 @@ const MessageBar = () => {
         ))}
       </select>
       <button
-        className={`tts-button text-xs sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5 flex-shrink-0 ${isTtsEnabled ? "active" : ""}`}
+        className={`tts-button text-xs sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5 flex-shrink-0 ${
+          isTtsEnabled ? "active" : ""
+        }`}
         onClick={toggleTts}
         disabled={isGeneratingAudio}
       >
         {isGeneratingAudio ? (
           <span className="loading loading-spinner loading-xs sm:loading-sm"></span>
+        ) : isTtsEnabled ? (
+          "TTS Off"
         ) : (
-          isTtsEnabled ? "TTS Off" : "TTS"
+          "TTS"
         )}
       </button>
       <button
@@ -394,4 +410,4 @@ export default MessageBar;
 // Replace the existing className with this
 <div className="message-bar-fixed border-t border-white/10 p-4">
   {/* Rest of your message bar content */}
-</div>
+</div>;
