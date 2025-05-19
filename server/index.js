@@ -9,6 +9,7 @@ import messagesRoutes from "./routes/MessagesRoute.js";
 import setupSocket from "./socket.js";
 import channelRoutes from "./routes/ChannelRoutes.js";
 import ttsRoutes from "./routes/tts.js";
+import path from "path";
 
 dotenv.config();
 
@@ -31,6 +32,14 @@ app.use("/uploads/audio", express.static("uploads/audio"));
 
 app.use(cookieParser());
 app.use(express.json());
+
+
+
+// Fallback to index.html for client-side routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join('frontend', 'build', 'index.html'));
+});
+
 
 // Add root route here BEFORE starting the server
 app.get("/", (req, res) => {
