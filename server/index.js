@@ -13,7 +13,7 @@ import ttsRoutes from "./routes/tts.js";
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 8747;
 const databaseURL = process.env.DATABASE_URL;
 
 app.use(
@@ -31,6 +31,11 @@ app.use("/uploads/audio", express.static("uploads/audio"));
 
 app.use(cookieParser());
 app.use(express.json());
+
+// Add root route here BEFORE starting the server
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
+});
 
 // Create HTTP server
 const server = app.listen(port, () => {
