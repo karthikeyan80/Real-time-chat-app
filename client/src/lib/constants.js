@@ -24,7 +24,7 @@ export const LEAVE_CHANNEL = `${CHANNEL_ROUTES}/leave`;
 export const DISBAND_CHANNEL = `${CHANNEL_ROUTES}/disband`;
 
 export const CONTACTS_ROTUES = "/api/contacts";
-export const SEARCH_CONTACTS_ROTUES = `${CONTACTS_ROTUES}/search`;
+export const SEARCH_CONTACTS_ROUTES = `${CONTACTS_ROTUES}/search`;
 export const GET_CONTACTS_WITH_MESSAGES_ROUTE = `${CONTACTS_ROTUES}/get-contacts-for-list`;
 export const GET_ALL_CONTACTS = `${CONTACTS_ROTUES}/all-contacts`;
 
