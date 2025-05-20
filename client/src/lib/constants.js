@@ -23,10 +23,10 @@ export const ADD_MEMBERS_TO_CHANNEL = `${CHANNEL_ROUTES}/add-members`;
 export const LEAVE_CHANNEL = `${CHANNEL_ROUTES}/leave`;
 export const DISBAND_CHANNEL = `${CHANNEL_ROUTES}/disband`;
 
-export const CONTACTS_ROUTES = "/api/contacts";
-export const SEARCH_CONTACTS_ROUTES = `${CONTACTS_ROTUES}/search`;
-export const GET_CONTACTS_WITH_MESSAGES_ROUTE = `${CONTACTS_ROUTES}/get-contacts-for-list`;
-export const GET_ALL_CONTACTS = `${CONTACTS_ROUTES}/all-contacts`;
+export const CONTACTS_ROTUES = "/api/contacts";
+export const SEARCH_CONTACTS_ROTUES = `${CONTACTS_ROTUES}/search`;
+export const GET_CONTACTS_WITH_MESSAGES_ROUTE = `${CONTACTS_ROTUES}/get-contacts-for-list`;
+export const GET_ALL_CONTACTS = `${CONTACTS_ROTUES}/all-contacts`;
 
 export const MESSAGE_TYPES = {
   TEXT: "text",
