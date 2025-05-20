@@ -35,12 +35,6 @@ app.use(express.json());
 
 
 
-// Fallback to index.html for client-side routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join('frontend', 'build', 'index.html'));
-});
-
-
 // Add root route here BEFORE starting the server
 app.get("/", (req, res) => {
   res.send("Backend is running!");
