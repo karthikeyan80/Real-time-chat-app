@@ -1,5 +1,5 @@
 import axios from "axios";
-import { HOST } from "./constants";
+import { HOST } from "./constants.js";
 
 const apiClient = axios.create({
   baseURL: HOST,
